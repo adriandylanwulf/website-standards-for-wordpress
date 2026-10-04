@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0
+
+- Eigenständiger Datei-Cache als einziger Cache-Weg; die nicht vorhandene WP-Super-Cache-Abhängigkeit wurde aus Oberfläche, Status und Wartung entfernt.
+- Migration bestehender Installationen auf den nativen Cache ohne Übernahme veralteter Cache-Dateien.
+- Der interne WordPress-Cron wird bei aktiviertem externem Cronjob als Information statt als pauschaler Fehler angezeigt.
+- Der letzte tatsächlich registrierte Cronlauf wird bei `wp-cron.php`-Ausführungen gespeichert und in der Wartungsansicht angezeigt.
+- Verwaiste eigene `advanced-cache.php`-Drop-ins werden entfernt, wenn die frühe Auslieferung deaktiviert ist.
+- CLI-Status um frühe Auslieferung und letzten Cronlauf ergänzt.
+
 ## 1.0.7
 
 - Cache-Modi „Kaum Cache“, „Leicht“, „Normal“ und „Stark“ mit verständlichen Vor- und Nachteilen ergänzt.
