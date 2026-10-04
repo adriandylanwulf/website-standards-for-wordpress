@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.1.0
+ * Version: 1.1.1
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.1.0';
+	private const VERSION      = '1.1.1';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
@@ -682,36 +682,48 @@ PHP;
 		?>
 		<div class="wrap adrian-site-cache-admin">
 			<style>
-				.adrian-site-cache-admin{max-width:860px}.adrian-site-cache-admin .asc-card{background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px;margin:18px 0}.adrian-site-cache-admin .asc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.adrian-site-cache-admin .asc-stat{background:#f6f7f7;border-radius:6px;padding:14px}.adrian-site-cache-admin .asc-stat strong{display:block;font-size:20px;margin-top:4px}.adrian-site-cache-admin label{display:block;margin:14px 0 6px;font-weight:600}.adrian-site-cache-admin select{min-width:260px}.adrian-site-cache-admin .description{color:#50575e}.adrian-site-cache-admin .notice-inline,.adrian-site-cache-admin .notice-info{padding:10px 12px;border-left:4px solid #dba617;background:#fff8e5}.adrian-site-cache-admin .notice-info{border-left-color:#2271b1;background:#f0f6fc}.adrian-site-cache-admin .asc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.adrian-site-cache-admin .asc-mode-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.adrian-site-cache-admin .asc-mode{background:#f6f7f7;border:1px solid #dcdcde;border-radius:6px;padding:12px}.adrian-site-cache-admin .asc-mode strong{display:block;margin-bottom:4px}.adrian-site-cache-admin .asc-mode small{display:block;color:#50575e;margin-top:5px}.adrian-site-cache-admin .asc-facts{color:#50575e;margin:8px 0 0}@media(max-width:700px){.adrian-site-cache-admin .asc-grid,.adrian-site-cache-admin .asc-mode-list{grid-template-columns:1fr}}
+				.adrian-site-cache-admin{max-width:1080px;margin-right:20px;color:#1d2327}.adrian-site-cache-admin .asc-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;background:#fff;border:1px solid #d9e2ec;border-top:4px solid #2271b1;border-radius:12px;padding:24px 28px;margin:18px 0 16px}.adrian-site-cache-admin .asc-kicker{margin:0 0 8px;color:#2271b1;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.adrian-site-cache-admin .asc-header h1{margin:0;color:#172b3a;font-size:29px;line-height:1.2}.adrian-site-cache-admin .asc-lead{max-width:680px;margin:10px 0 0;color:#536579;font-size:14px;line-height:1.55}.adrian-site-cache-admin .asc-status{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;padding:8px 12px;border:1px solid #bbd7c6;border-radius:999px;background:#f1faf4;color:#17683b;font-size:13px;font-weight:600;white-space:nowrap}.adrian-site-cache-admin .asc-status.is-paused{border-color:#e6c98c;background:#fff8e7;color:#7a4f00}.adrian-site-cache-admin .asc-status-dot{width:8px;height:8px;border-radius:50%;background:#2da05a}.adrian-site-cache-admin .asc-status.is-paused .asc-status-dot{background:#c58a00}.adrian-site-cache-admin .asc-card{background:#fff;border:1px solid #d9e2ec;border-radius:12px;padding:22px 24px;margin:16px 0;box-shadow:0 1px 2px rgba(23,43,58,.04)}.adrian-site-cache-admin .asc-overview{padding:12px}.adrian-site-cache-admin .asc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.adrian-site-cache-admin .asc-stat{min-height:78px;padding:16px;background:#f6f9fc;border:1px solid #e1eaf2;border-radius:9px}.adrian-site-cache-admin .asc-stat-label{display:block;color:#536579;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}.adrian-site-cache-admin .asc-stat strong{display:block;margin-top:6px;color:#173a5a;font-size:20px;line-height:1.25}.adrian-site-cache-admin .asc-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}.adrian-site-cache-admin .asc-section-label{margin:0 0 5px;color:#2271b1;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.adrian-site-cache-admin .asc-section-head h2{margin:0;color:#172b3a;font-size:20px}.adrian-site-cache-admin .asc-settings-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:24px;align-items:start}.adrian-site-cache-admin .asc-toggle{display:flex;gap:10px;margin:0 0 12px;padding:12px;background:#f8fafc;border:1px solid #e4ebf2;border-radius:8px}.adrian-site-cache-admin .asc-toggle input{flex:0 0 auto;margin-top:3px}.adrian-site-cache-admin .asc-toggle strong{display:block;color:#243b50}.adrian-site-cache-admin .asc-toggle small{display:block;margin-top:3px;color:#536579;font-size:12px;line-height:1.45}.adrian-site-cache-admin .asc-note{margin:16px 0 0;padding:12px 14px;border-left:3px solid #2271b1;background:#f0f6fc;color:#46596b;font-size:13px;line-height:1.55}.adrian-site-cache-admin label{display:block;margin:14px 0 6px;font-weight:600}.adrian-site-cache-admin select{box-sizing:border-box;width:100%;min-width:0;max-width:100%}.adrian-site-cache-admin .description{color:#536579;line-height:1.55}.adrian-site-cache-admin .notice-inline,.adrian-site-cache-admin .notice-info{padding:10px 12px;border-left:4px solid #dba617;background:#fff8e5}.adrian-site-cache-admin .notice-info{border-left-color:#2271b1;background:#f0f6fc}.adrian-site-cache-admin .asc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.adrian-site-cache-admin .asc-actions form{margin:0}.adrian-site-cache-admin .asc-actions .button{min-height:38px;padding:4px 14px}.adrian-site-cache-admin .asc-mode-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:20px}.adrian-site-cache-admin .asc-mode{padding:14px;background:#fbfcfd;border:1px solid #dfe7ef;border-radius:8px;color:#46596b;line-height:1.5}.adrian-site-cache-admin .asc-mode.is-current{border-color:#2271b1;background:#f5f9fd;box-shadow:inset 3px 0 0 #2271b1}.adrian-site-cache-admin .asc-mode strong{display:block;margin-bottom:4px;color:#243b50}.adrian-site-cache-admin .asc-mode small{display:block;margin-top:7px;color:#536579;font-size:12px;line-height:1.5}.adrian-site-cache-admin .asc-mode small strong{display:inline;margin:0;color:#243b50}.adrian-site-cache-admin .asc-facts{margin:18px 0 0;padding-top:14px;border-top:1px solid #e1eaf2;color:#536579;font-size:13px}.adrian-site-cache-admin .asc-submit-row{margin:20px 0 0}.adrian-site-cache-admin .asc-maintenance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 18px}.adrian-site-cache-admin .asc-maintenance-fact{padding:13px 14px;background:#f8fafc;border:1px solid #e4ebf2;border-radius:8px}.adrian-site-cache-admin .asc-maintenance-fact span{display:block;color:#536579;font-size:12px}.adrian-site-cache-admin .asc-maintenance-fact strong{display:block;margin-top:4px;color:#243b50;font-size:15px}.adrian-site-cache-admin .asc-help{margin:0;color:#536579;font-size:13px;line-height:1.55}@media(max-width:800px){.adrian-site-cache-admin .asc-settings-grid{grid-template-columns:1fr}}@media(max-width:600px){.adrian-site-cache-admin{margin-right:10px}.adrian-site-cache-admin .asc-header{display:block;padding:20px}.adrian-site-cache-admin .asc-status{margin-top:16px}.adrian-site-cache-admin .asc-card{padding:18px}.adrian-site-cache-admin .asc-grid,.adrian-site-cache-admin .asc-mode-list,.adrian-site-cache-admin .asc-maintenance-grid{grid-template-columns:1fr}.adrian-site-cache-admin .asc-actions form,.adrian-site-cache-admin .asc-actions .button{width:100%}}
 			</style>
-			<h1>Adrian Site Cache</h1>
-			<p>Schlanke Cache-Steuerung für diese Website. Der Cache wird nur für öffentliche GET-Seiten verwendet.</p>
+			<div class="asc-header">
+				<div>
+					<p class="asc-kicker">Website-Wartung</p>
+					<h1>Adrian Site Cache</h1>
+					<p class="asc-lead">Schlanke Cache-Steuerung für diese Website. Der Cache wird nur für öffentliche GET-Seiten verwendet.</p>
+				</div>
+				<span class="asc-status <?php echo empty( $options['enabled'] ) || is_multisite() ? 'is-paused' : ''; ?>"><span class="asc-status-dot" aria-hidden="true"></span><?php echo empty( $options['enabled'] ) || is_multisite() ? 'Cache pausiert' : 'Cache aktiv'; ?></span>
+			</div>
 			<?php if ( is_multisite() ) : ?><div class="notice-inline"><p>Der native Datei-Cache ist auf Multisite deaktiviert, damit gemeinsame Cache- und Drop-in-Dateien keine Inhalte zwischen Websites vermischen können.</p></div><?php endif; ?>
 			<?php if ( in_array( $message, [ 'saved', 'purged', 'collected' ], true ) ) : ?><div class="notice notice-success is-dismissible"><p>Cache-Einstellung gespeichert.</p></div><?php endif; ?>
-			<div class="asc-card">
+			<div class="asc-card asc-overview">
 				<div class="asc-grid">
-					<div class="asc-stat">Aktiver Weg<strong><?php echo esc_html( is_multisite() ? 'Deaktiviert (Multisite)' : 'Eigener Datei-Cache' ); ?></strong></div>
-					<div class="asc-stat">Cache-Dateien<strong><?php echo esc_html( number_format_i18n( $stats['count'] ) ); ?></strong></div>
-					<div class="asc-stat">Cache-Größe<strong><?php echo esc_html( size_format( $stats['bytes'] ) ); ?></strong></div>
+					<div class="asc-stat"><span class="asc-stat-label">Aktiver Weg</span><strong><?php echo esc_html( is_multisite() ? 'Deaktiviert (Multisite)' : 'Eigener Datei-Cache' ); ?></strong></div>
+					<div class="asc-stat"><span class="asc-stat-label">Cache-Dateien</span><strong><?php echo esc_html( number_format_i18n( $stats['count'] ) ); ?></strong></div>
+					<div class="asc-stat"><span class="asc-stat-label">Cache-Größe</span><strong><?php echo esc_html( size_format( $stats['bytes'] ) ); ?></strong></div>
 				</div>
 			</div>
 			<form method="post" class="asc-card">
 				<?php wp_nonce_field( 'adrian_site_cache_settings' ); ?>
 				<input type="hidden" name="adrian_site_cache_action" value="save">
-				<label><input type="checkbox" name="enabled" value="1" <?php checked( ! empty( $options['enabled'] ) ); ?>> Cache-Steuerung aktiv</label>
-				<label><input type="checkbox" name="early" value="1" <?php checked( ! empty( $options['early'] ) ); ?>> Frühe Auslieferung über den Drop-in aktivieren</label>
-				<p><strong>Cache-Weg: Eigener Datei-Cache</strong></p>
-				<p class="description">Diese Version arbeitet eigenständig und benötigt kein zusätzliches Full-Page-Cache-Plugin. Die frühe Auslieferung bleibt aus Sicherheitsgründen standardmäßig deaktiviert und sollte erst nach einem Test von Login, Formularen, Datenschutz und allen dynamischen Bereichen aktiviert werden.</p>
-				<label for="adrian-site-cache-mode">Cache-Modus</label>
-				<select id="adrian-site-cache-mode" name="mode">
-					<?php foreach ( $modes as $mode_key => $mode_data ) : ?>
-						<option value="<?php echo esc_attr( $mode_key ); ?>" <?php selected( $mode, $mode_key ); ?>><?php echo esc_html( $mode_data['label'] ); ?></option>
-					<?php endforeach; ?>
-				</select>
-				<p class="description">Der Modus legt Gültigkeitsdauer und Speichergrenze gemeinsam fest. So bleibt die Einstellung verständlich und kann nicht versehentlich in eine zu aggressive Einzelkonfiguration kippen.</p>
+				<div class="asc-section-head"><div><p class="asc-section-label">Betrieb</p><h2>Cache-Steuerung</h2></div></div>
+				<div class="asc-settings-grid">
+					<div>
+						<label class="asc-toggle"><input type="checkbox" name="enabled" value="1" <?php checked( ! empty( $options['enabled'] ) ); ?>><span><strong>Cache-Steuerung aktiv</strong><small>Öffentliche, parameterlose Seiten werden zwischengespeichert.</small></span></label>
+						<label class="asc-toggle"><input type="checkbox" name="early" value="1" <?php checked( ! empty( $options['early'] ) ); ?>><span><strong>Frühe Auslieferung über den Drop-in</strong><small>Optional: Cache-Treffer werden vor dem WordPress-Start ausgeliefert.</small></span></label>
+						<p class="asc-note"><strong>Eigener Datei-Cache.</strong> Diese Version arbeitet eigenständig und benötigt kein zusätzliches Full-Page-Cache-Plugin. Die frühe Auslieferung bleibt aus Sicherheitsgründen standardmäßig deaktiviert und sollte erst nach einem Test von Login, Formularen, Datenschutz und allen dynamischen Bereichen aktiviert werden.</p>
+					</div>
+					<div>
+						<label for="adrian-site-cache-mode">Cache-Modus</label>
+						<select id="adrian-site-cache-mode" name="mode">
+							<?php foreach ( $modes as $mode_key => $mode_data ) : ?>
+								<option value="<?php echo esc_attr( $mode_key ); ?>" <?php selected( $mode, $mode_key ); ?>><?php echo esc_html( $mode_data['label'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+						<p class="description">Der Modus legt Gültigkeitsdauer und Speichergrenze gemeinsam fest. So bleibt die Einstellung verständlich und kann nicht versehentlich in eine zu aggressive Einzelkonfiguration kippen.</p>
+					</div>
+				</div>
 				<div class="asc-mode-list" aria-label="Vor- und Nachteile der Cache-Modi">
-					<?php foreach ( $modes as $mode_data ) : ?>
-						<div class="asc-mode">
+					<?php foreach ( $modes as $mode_key => $mode_data ) : ?>
+						<div class="asc-mode <?php echo $mode === $mode_key ? 'is-current' : ''; ?>">
 							<strong><?php echo esc_html( $mode_data['label'] ); ?></strong>
 							<span><?php echo esc_html( $mode_data['description'] ); ?></span>
 							<small><strong>Vorteil:</strong> <?php echo esc_html( $mode_data['advantages'] ); ?><br><strong>Nachteil:</strong> <?php echo esc_html( $mode_data['disadvantages'] ); ?></small>
@@ -719,17 +731,20 @@ PHP;
 					<?php endforeach; ?>
 				</div>
 				<p class="asc-facts">Aktueller Modus: <?php echo esc_html( $modes[ $mode ]['label'] ); ?> · <?php echo esc_html( $modes[ $mode ]['ttl'] ); ?> Sekunden · <?php echo esc_html( number_format_i18n( $modes[ $mode ]['max_files'] ) ); ?> Dateien · <?php echo esc_html( size_format( $modes[ $mode ]['max_bytes'] ) ); ?> Speicherlimit.</p>
-				<p><button type="submit" class="button button-primary">Einstellungen speichern</button></p>
+				<p class="asc-submit-row"><button type="submit" class="button button-primary">Einstellungen speichern</button></p>
 			</form>
 			<div class="asc-card">
-				<h2>Wartung</h2>
-				<p>Letzte Leerung: <?php echo $options['last_purge'] ? esc_html( wp_date( 'd.m.Y H:i', (int) $options['last_purge'] ) ) : 'noch nicht'; ?></p>
-				<p>Nächste Cache-Bereinigung: <?php echo $cron ? esc_html( wp_date( 'd.m.Y H:i', $cron ) ) : 'nicht geplant'; ?></p>
+				<div class="asc-section-head"><div><p class="asc-section-label">Pflege</p><h2>Wartung</h2></div></div>
+				<div class="asc-maintenance-grid">
+					<div class="asc-maintenance-fact"><span>Letzte Leerung</span><strong><?php echo $options['last_purge'] ? esc_html( wp_date( 'd.m.Y H:i', (int) $options['last_purge'] ) ) : 'Noch nicht'; ?></strong></div>
+					<div class="asc-maintenance-fact"><span>Nächste Cache-Bereinigung</span><strong><?php echo $cron ? esc_html( wp_date( 'd.m.Y H:i', $cron ) ) : 'Nicht geplant'; ?></strong></div>
+				</div>
 				<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?>
 					<p class="notice-info">Der interne WordPress-Cron ist deaktiviert. Die Wartung wird über den externen Server-Cronjob ausgeführt. <?php echo $last_cron ? 'Letzter registrierter Cronlauf: ' . esc_html( wp_date( 'd.m.Y H:i', $last_cron ) ) . '.' : 'Ein externer Cronlauf wurde bisher noch nicht registriert.'; ?></p>
 				<?php endif; ?>
 				<?php if ( ! empty( $options['early'] ) && ( ! defined( 'WP_CACHE' ) || ! WP_CACHE ) ) : ?><p class="notice-inline">Für die schnelle frühe Auslieferung muss <code>WP_CACHE</code> aktiviert sein. Ohne diese Konstante arbeitet der Cache nur nach dem WordPress-Start.</p><?php endif; ?>
 				<?php if ( ! empty( $options['early'] ) && defined( 'WP_CACHE' ) && WP_CACHE ) : ?><p>Frühe Auslieferung: <?php echo file_exists( trailingslashit( WP_CONTENT_DIR ) . 'advanced-cache.php' ) && false !== strpos( (string) file_get_contents( trailingslashit( WP_CONTENT_DIR ) . 'advanced-cache.php' ), 'ADRIAN_SITE_CACHE_DROPIN' ) ? 'aktiv' : 'nicht aktiv'; ?></p><?php endif; ?>
+				<p class="asc-help">Manuelle Leerungen sind jederzeit möglich. Die automatische Bereinigung entfernt abgelaufene Dateien und hält das konfigurierte Speicherlimit ein.</p>
 				<div class="asc-actions">
 					<form method="post"><?php wp_nonce_field( 'adrian_site_cache_settings' ); ?><input type="hidden" name="adrian_site_cache_action" value="purge"><button class="button">Alle Caches leeren</button></form>
 					<form method="post"><?php wp_nonce_field( 'adrian_site_cache_settings' ); ?><input type="hidden" name="adrian_site_cache_action" value="gc"><button class="button">Eigene Cache-Dateien bereinigen</button></form>
