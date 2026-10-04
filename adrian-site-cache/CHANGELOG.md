@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.1
+
+- Administrationsoberfläche visuell überarbeitet: ruhige blaue Akzente, klarer Aktiv-Status und kompaktere Statuskarten.
+- Einstellungen, Cache-Modi und Wartung in verständliche Bereiche gegliedert.
+- Aktiver Cache-Modus wird optisch hervorgehoben; Wartungsdaten werden als kompakte Fakten dargestellt.
+- Responsive Darstellung für schmale Admin-Ansichten verbessert, ohne externe Schriftarten, JavaScript-Bibliotheken oder zusätzliche Abhängigkeiten.
+
 ## 1.1.0
 
 - Eigenständiger Datei-Cache als einziger Cache-Weg; die nicht vorhandene WP-Super-Cache-Abhängigkeit wurde aus Oberfläche, Status und Wartung entfernt.
