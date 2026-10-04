@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name: Adrian Site Cache
- * Description: Schlanke, sichere Cache-Steuerung für eine persönliche WordPress-Website mit WP-Super-Cache-Integration und eigenem Datei-Cache als Fallback.
- * Version: 1.0.7
+ * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
+ * Version: 1.1.0
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,10 +13,11 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.0.7';
+	private const VERSION      = '1.1.0';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
+	private const CRON_LAST_OPTION = 'adrian_site_cache_last_cron_run';
 	private const CRON_HOOK    = 'adrian_site_cache_gc';
 	private const CACHE_FOLDER = 'adrian-site-cache';
 
@@ -35,9 +36,9 @@ final class Adrian_Site_Cache {
 		$defaults = self::defaults();
 		$current  = get_option( self::OPTION, [] );
 		$options = wp_parse_args( is_array( $current ) ? $current : [], $defaults );
+		$options['engine'] = 'native';
 		if ( is_multisite() ) {
-			$options['engine'] = 'controller';
-			$options['early']  = 0;
+			$options['early'] = 0;
 		}
 		update_option( self::OPTION, $options, false );
 
@@ -47,9 +48,11 @@ final class Adrian_Site_Cache {
 
 		$instance = self::instance();
 		$instance->ensure_native_cache_dir();
-		if ( is_multisite() || $instance->wp_super_cache_active() ) {
+		$instance->delete_native_cache_files();
+		if ( ! empty( $options['early'] ) && ! is_multisite() ) {
+			$instance->sync_owned_dropin();
+		} else {
 			$instance->remove_owned_dropin();
-			$instance->delete_native_cache_files();
 		}
 		update_option( self::VERSION_OPTION, self::VERSION, false );
 	}
@@ -62,7 +65,7 @@ final class Adrian_Site_Cache {
 	private static function defaults(): array {
 		return [
 			'enabled'    => 1,
-			'engine'     => 'controller',
+			'engine'     => 'native',
 			'early'      => 0,
 			'mode'       => 'normal',
 			'ttl'        => 900,
@@ -75,6 +78,7 @@ final class Adrian_Site_Cache {
 	private function __construct() {
 		add_action( 'plugins_loaded', [ $this, 'maybe_upgrade' ], 20 );
 		add_action( 'init', [ $this, 'maybe_schedule' ], 20 );
+		add_action( 'init', [ $this, 'record_cron_run' ], 1 );
 		add_action( 'template_redirect', [ $this, 'maybe_serve_or_buffer' ], 0 );
 		add_action( self::CRON_HOOK, [ $this, 'garbage_collect' ] );
 
@@ -89,8 +93,6 @@ final class Adrian_Site_Cache {
 		add_action( 'switch_theme', [ $this, 'purge_after_content_change' ] );
 		add_action( 'customize_save_after', [ $this, 'purge_after_content_change' ] );
 		add_action( 'updated_option', [ $this, 'purge_after_option_change' ], 20, 3 );
-		add_action( 'activated_plugin', [ $this, 'handle_plugin_lifecycle' ], 20, 2 );
-		add_action( 'deactivated_plugin', [ $this, 'handle_plugin_lifecycle' ], 20, 2 );
 
 		if ( is_admin() ) {
 			add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
@@ -105,6 +107,18 @@ final class Adrian_Site_Cache {
 	public function maybe_schedule(): void {
 		if ( ! wp_next_scheduled( self::CRON_HOOK ) ) {
 			wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', self::CRON_HOOK );
+		}
+	}
+
+	public function record_cron_run(): void {
+		if ( ! function_exists( 'wp_doing_cron' ) || ! wp_doing_cron() ) {
+			return;
+		}
+
+		$now  = time();
+		$last = (int) get_option( self::CRON_LAST_OPTION, 0 );
+		if ( $last < $now - MINUTE_IN_SECONDS ) {
+			update_option( self::CRON_LAST_OPTION, $now, false );
 		}
 	}
 
@@ -167,47 +181,22 @@ final class Adrian_Site_Cache {
 			$options['mode'] = 'normal';
 		}
 
+		$options['engine'] = 'native';
+		if ( is_multisite() ) {
+			$options['early'] = 0;
+		}
+
 		// Do not let a new drop-in serve files created by an older implementation.
 		$this->remove_owned_dropin();
 		$this->delete_native_cache_files();
-		if ( is_multisite() || $this->wp_super_cache_active() ) {
-			$options['engine'] = 'controller';
-			$options['early']  = 0;
-		}
 		update_option( self::OPTION, $options, false );
+		$this->ensure_native_cache_dir();
 		update_option( self::VERSION_OPTION, self::VERSION, false );
-	}
-
-	private function wp_super_cache_active(): bool {
-		$active = (array) get_option( 'active_plugins', [] );
-		if ( in_array( 'wp-super-cache/wp-cache.php', $active, true ) ) {
-			return true;
-		}
-
-		if ( is_multisite() ) {
-			$network_active = (array) get_site_option( 'active_sitewide_plugins', [] );
-			return isset( $network_active['wp-super-cache/wp-cache.php'] );
-		}
-
-		return false;
 	}
 
 	private function native_mode(): bool {
 		$options = $this->options();
-		return ! is_multisite() && 'native' === $options['engine'] && ! $this->wp_super_cache_active();
-	}
-
-	public function handle_plugin_lifecycle( string $plugin ): void {
-		if ( 'wp-super-cache/wp-cache.php' !== $plugin || ! $this->wp_super_cache_active() ) {
-			return;
-		}
-
-		$options           = $this->options();
-		$options['engine'] = 'controller';
-		$options['early']  = 0;
-		update_option( self::OPTION, $options, false );
-		$this->remove_owned_dropin();
-		$this->delete_native_cache_files();
+		return ! is_multisite() && 'native' === $options['engine'];
 	}
 
 	public function maybe_serve_or_buffer(): void {
@@ -367,7 +356,7 @@ final class Adrian_Site_Cache {
 	}
 
 	private function sync_owned_dropin(): bool {
-		if ( ! defined( 'WP_CONTENT_DIR' ) || ! $this->native_mode() || empty( $this->options()['enabled'] ) ) {
+		if ( ! defined( 'WP_CONTENT_DIR' ) || ! $this->native_mode() || empty( $this->options()['enabled'] ) || empty( $this->options()['early'] ) ) {
 			return false;
 		}
 
@@ -523,17 +512,17 @@ PHP;
 	}
 
 	public function purge( string $reason = 'manual' ): void {
-		if ( $this->wp_super_cache_active() && function_exists( 'wp_cache_clear_cache' ) ) {
-			wp_cache_clear_cache();
-		}
-
 		$this->delete_native_cache_files();
 		$options             = $this->options();
 		$options['last_purge'] = time();
 		update_option( self::OPTION, $options, false );
 		if ( $this->native_mode() ) {
 			$this->write_dropin_config();
-			$this->sync_owned_dropin();
+			if ( ! empty( $options['early'] ) ) {
+				$this->sync_owned_dropin();
+			} else {
+				$this->remove_owned_dropin();
+			}
 		}
 	}
 
@@ -646,29 +635,24 @@ PHP;
 		}
 
 		$options = $this->options();
-		$engine  = sanitize_key( wp_unslash( $_POST['engine'] ?? 'controller' ) );
-		if ( ! in_array( $engine, [ 'controller', 'native' ], true ) ) {
-			$engine = 'controller';
-		}
-		if ( 'native' === $engine && ( $this->wp_super_cache_active() || is_multisite() ) ) {
-			$this->redirect_admin( 'conflict' );
-		}
-
 		$modes = self::cache_modes();
 		$mode  = sanitize_key( wp_unslash( $_POST['mode'] ?? 'normal' ) );
 		if ( ! isset( $modes[ $mode ] ) ) {
 			$mode = 'normal';
 		}
 		$options['enabled']   = empty( $_POST['enabled'] ) ? 0 : 1;
-		$options['engine']    = $engine;
+		$options['engine']    = 'native';
 		$options['early']     = empty( $_POST['early'] ) ? 0 : 1;
+		if ( is_multisite() ) {
+			$options['early'] = 0;
+		}
 		$options['mode']      = $mode;
 		$options['ttl']       = $modes[ $mode ]['ttl'];
 		$options['max_files'] = $modes[ $mode ]['max_files'];
 		$options['max_bytes'] = $modes[ $mode ]['max_bytes'];
 		update_option( self::OPTION, $options, false );
-		if ( 'native' === $engine ) {
-			$this->ensure_native_cache_dir();
+		$this->ensure_native_cache_dir();
+		if ( ! empty( $options['early'] ) ) {
 			$this->sync_owned_dropin();
 		} else {
 			$this->remove_owned_dropin();
@@ -692,21 +676,21 @@ PHP;
 		$stats   = $this->cache_stats();
 		$message = sanitize_key( $_GET['message'] ?? '' );
 		$cron    = wp_next_scheduled( self::CRON_HOOK );
+		$last_cron = (int) get_option( self::CRON_LAST_OPTION, 0 );
 		$modes   = self::cache_modes();
 		$mode    = isset( $modes[ $options['mode'] ] ) ? $options['mode'] : 'normal';
 		?>
 		<div class="wrap adrian-site-cache-admin">
 			<style>
-				.adrian-site-cache-admin{max-width:860px}.adrian-site-cache-admin .asc-card{background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px;margin:18px 0}.adrian-site-cache-admin .asc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.adrian-site-cache-admin .asc-stat{background:#f6f7f7;border-radius:6px;padding:14px}.adrian-site-cache-admin .asc-stat strong{display:block;font-size:20px;margin-top:4px}.adrian-site-cache-admin label{display:block;margin:14px 0 6px;font-weight:600}.adrian-site-cache-admin select{min-width:260px}.adrian-site-cache-admin .description{color:#50575e}.adrian-site-cache-admin .notice-inline{padding:10px 12px;border-left:4px solid #dba617;background:#fff8e5}.adrian-site-cache-admin .asc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.adrian-site-cache-admin .asc-mode-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.adrian-site-cache-admin .asc-mode{background:#f6f7f7;border:1px solid #dcdcde;border-radius:6px;padding:12px}.adrian-site-cache-admin .asc-mode strong{display:block;margin-bottom:4px}.adrian-site-cache-admin .asc-mode small{display:block;color:#50575e;margin-top:5px}.adrian-site-cache-admin .asc-facts{color:#50575e;margin:8px 0 0}@media(max-width:700px){.adrian-site-cache-admin .asc-grid,.adrian-site-cache-admin .asc-mode-list{grid-template-columns:1fr}}
+				.adrian-site-cache-admin{max-width:860px}.adrian-site-cache-admin .asc-card{background:#fff;border:1px solid #dcdcde;border-radius:8px;padding:20px;margin:18px 0}.adrian-site-cache-admin .asc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.adrian-site-cache-admin .asc-stat{background:#f6f7f7;border-radius:6px;padding:14px}.adrian-site-cache-admin .asc-stat strong{display:block;font-size:20px;margin-top:4px}.adrian-site-cache-admin label{display:block;margin:14px 0 6px;font-weight:600}.adrian-site-cache-admin select{min-width:260px}.adrian-site-cache-admin .description{color:#50575e}.adrian-site-cache-admin .notice-inline,.adrian-site-cache-admin .notice-info{padding:10px 12px;border-left:4px solid #dba617;background:#fff8e5}.adrian-site-cache-admin .notice-info{border-left-color:#2271b1;background:#f0f6fc}.adrian-site-cache-admin .asc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}.adrian-site-cache-admin .asc-mode-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}.adrian-site-cache-admin .asc-mode{background:#f6f7f7;border:1px solid #dcdcde;border-radius:6px;padding:12px}.adrian-site-cache-admin .asc-mode strong{display:block;margin-bottom:4px}.adrian-site-cache-admin .asc-mode small{display:block;color:#50575e;margin-top:5px}.adrian-site-cache-admin .asc-facts{color:#50575e;margin:8px 0 0}@media(max-width:700px){.adrian-site-cache-admin .asc-grid,.adrian-site-cache-admin .asc-mode-list{grid-template-columns:1fr}}
 			</style>
 			<h1>Adrian Site Cache</h1>
 			<p>Schlanke Cache-Steuerung für diese Website. Der Cache wird nur für öffentliche GET-Seiten verwendet.</p>
-			<?php if ( 'conflict' === $message ) : ?><div class="notice-inline"><p>Der eigene Datei-Cache wurde nicht aktiviert, weil entweder WP Super Cache noch aktiv ist oder diese Installation eine WordPress-Multisite ist. Der native Cache bleibt in diesen Fällen aus Sicherheitsgründen deaktiviert.</p></div><?php endif; ?>
 			<?php if ( is_multisite() ) : ?><div class="notice-inline"><p>Der native Datei-Cache ist auf Multisite deaktiviert, damit gemeinsame Cache- und Drop-in-Dateien keine Inhalte zwischen Websites vermischen können.</p></div><?php endif; ?>
 			<?php if ( in_array( $message, [ 'saved', 'purged', 'collected' ], true ) ) : ?><div class="notice notice-success is-dismissible"><p>Cache-Einstellung gespeichert.</p></div><?php endif; ?>
 			<div class="asc-card">
 				<div class="asc-grid">
-					<div class="asc-stat">Aktiver Weg<strong><?php echo esc_html( $this->wp_super_cache_active() ? 'WP Super Cache' : ( 'native' === $options['engine'] ? 'Eigener Datei-Cache' : 'Kein Page-Cache' ) ); ?></strong></div>
+					<div class="asc-stat">Aktiver Weg<strong><?php echo esc_html( is_multisite() ? 'Deaktiviert (Multisite)' : 'Eigener Datei-Cache' ); ?></strong></div>
 					<div class="asc-stat">Cache-Dateien<strong><?php echo esc_html( number_format_i18n( $stats['count'] ) ); ?></strong></div>
 					<div class="asc-stat">Cache-Größe<strong><?php echo esc_html( size_format( $stats['bytes'] ) ); ?></strong></div>
 				</div>
@@ -716,12 +700,8 @@ PHP;
 				<input type="hidden" name="adrian_site_cache_action" value="save">
 				<label><input type="checkbox" name="enabled" value="1" <?php checked( ! empty( $options['enabled'] ) ); ?>> Cache-Steuerung aktiv</label>
 				<label><input type="checkbox" name="early" value="1" <?php checked( ! empty( $options['early'] ) ); ?>> Frühe Auslieferung über den Drop-in aktivieren</label>
-				<label for="adrian-site-cache-engine">Cache-Weg</label>
-				<select id="adrian-site-cache-engine" name="engine">
-					<option value="controller" <?php selected( $options['engine'], 'controller' ); ?>>WP Super Cache steuern (empfohlen)</option>
-					<option value="native" <?php selected( $options['engine'], 'native' ); ?>>Eigener Datei-Cache</option>
-				</select>
-				<p class="description">Der eigene Datei-Cache darf erst verwendet werden, wenn WP Super Cache deaktiviert wurde. Die frühe Auslieferung bleibt aus Sicherheitsgründen standardmäßig deaktiviert und sollte erst nach einem Test von Login, Formularen, Datenschutz und allen dynamischen Bereichen aktiviert werden.</p>
+				<p><strong>Cache-Weg: Eigener Datei-Cache</strong></p>
+				<p class="description">Diese Version arbeitet eigenständig und benötigt kein zusätzliches Full-Page-Cache-Plugin. Die frühe Auslieferung bleibt aus Sicherheitsgründen standardmäßig deaktiviert und sollte erst nach einem Test von Login, Formularen, Datenschutz und allen dynamischen Bereichen aktiviert werden.</p>
 				<label for="adrian-site-cache-mode">Cache-Modus</label>
 				<select id="adrian-site-cache-mode" name="mode">
 					<?php foreach ( $modes as $mode_key => $mode_data ) : ?>
@@ -744,10 +724,12 @@ PHP;
 			<div class="asc-card">
 				<h2>Wartung</h2>
 				<p>Letzte Leerung: <?php echo $options['last_purge'] ? esc_html( wp_date( 'd.m.Y H:i', (int) $options['last_purge'] ) ) : 'noch nicht'; ?></p>
-				<p>Cronjob: <?php echo $cron ? esc_html( wp_date( 'd.m.Y H:i', $cron ) ) : 'nicht geplant'; ?></p>
-				<?php if ( 'native' === $options['engine'] && ! $this->wp_super_cache_active() && defined( 'WP_CACHE' ) && WP_CACHE ) : ?><p>Frühe Auslieferung: <?php echo ! empty( $options['early'] ) && file_exists( trailingslashit( WP_CONTENT_DIR ) . 'advanced-cache.php' ) && false !== strpos( (string) file_get_contents( trailingslashit( WP_CONTENT_DIR ) . 'advanced-cache.php' ), 'ADRIAN_SITE_CACHE_DROPIN' ) ? 'aktiv' : 'nicht aktiv'; ?></p><?php endif; ?>
-				<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?><p class="notice-inline">WordPress-Cron ist deaktiviert. Die automatische Bereinigung funktioniert nur, wenn Mittwald regelmäßig <code>wp-cron.php</code> oder WP-CLI ausführt.</p><?php endif; ?>
-				<?php if ( 'native' === $options['engine'] && ( ! defined( 'WP_CACHE' ) || ! WP_CACHE ) ) : ?><p class="notice-inline">Für die schnelle frühe Auslieferung muss <code>WP_CACHE</code> aktiviert sein. Ohne diese Konstante arbeitet der Cache nur nach dem WordPress-Start.</p><?php endif; ?>
+				<p>Nächste Cache-Bereinigung: <?php echo $cron ? esc_html( wp_date( 'd.m.Y H:i', $cron ) ) : 'nicht geplant'; ?></p>
+				<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?>
+					<p class="notice-info">Der interne WordPress-Cron ist deaktiviert. Die Wartung wird über den externen Server-Cronjob ausgeführt. <?php echo $last_cron ? 'Letzter registrierter Cronlauf: ' . esc_html( wp_date( 'd.m.Y H:i', $last_cron ) ) . '.' : 'Ein externer Cronlauf wurde bisher noch nicht registriert.'; ?></p>
+				<?php endif; ?>
+				<?php if ( ! empty( $options['early'] ) && ( ! defined( 'WP_CACHE' ) || ! WP_CACHE ) ) : ?><p class="notice-inline">Für die schnelle frühe Auslieferung muss <code>WP_CACHE</code> aktiviert sein. Ohne diese Konstante arbeitet der Cache nur nach dem WordPress-Start.</p><?php endif; ?>
+				<?php if ( ! empty( $options['early'] ) && defined( 'WP_CACHE' ) && WP_CACHE ) : ?><p>Frühe Auslieferung: <?php echo file_exists( trailingslashit( WP_CONTENT_DIR ) . 'advanced-cache.php' ) && false !== strpos( (string) file_get_contents( trailingslashit( WP_CONTENT_DIR ) . 'advanced-cache.php' ), 'ADRIAN_SITE_CACHE_DROPIN' ) ? 'aktiv' : 'nicht aktiv'; ?></p><?php endif; ?>
 				<div class="asc-actions">
 					<form method="post"><?php wp_nonce_field( 'adrian_site_cache_settings' ); ?><input type="hidden" name="adrian_site_cache_action" value="purge"><button class="button">Alle Caches leeren</button></form>
 					<form method="post"><?php wp_nonce_field( 'adrian_site_cache_settings' ); ?><input type="hidden" name="adrian_site_cache_action" value="gc"><button class="button">Eigene Cache-Dateien bereinigen</button></form>
@@ -773,9 +755,10 @@ PHP;
 		$options = $this->options();
 		$stats   = $this->cache_stats();
 		WP_CLI::log( 'enabled=' . ( ! empty( $options['enabled'] ) ? '1' : '0' ) );
-		WP_CLI::log( 'engine=' . $options['engine'] );
+		WP_CLI::log( 'engine=native' );
 		WP_CLI::log( 'mode=' . $options['mode'] );
-		WP_CLI::log( 'wp_super_cache=' . ( $this->wp_super_cache_active() ? '1' : '0' ) );
+		WP_CLI::log( 'early=' . ( ! empty( $options['early'] ) ? '1' : '0' ) );
+		WP_CLI::log( 'last_cron_run=' . ( (int) get_option( self::CRON_LAST_OPTION, 0 ) ?: '0' ) );
 		WP_CLI::log( 'cache_files=' . $stats['count'] );
 		WP_CLI::log( 'cache_bytes=' . $stats['bytes'] );
 	}
