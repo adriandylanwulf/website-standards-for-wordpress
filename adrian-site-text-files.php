@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Website-Textdateien für Adrian Dylan Wulf
  * Description: Verwaltet maschinenlesbare Website-Standards wie security.txt, robots.txt-Erweiterungen, LLM-Kontext und Webmetadaten.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Adrian Dylan Wulf
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.3.0' );
+define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.3.1' );
 define( 'ADRIAN_SITE_TEXT_FILES_OPTION', 'adrian_site_text_files_options' );
 define( 'ADRIAN_SITE_TEXT_FILES_QUERY_VAR', 'adrian_site_text_file' );
 
@@ -166,6 +166,7 @@ function adrian_site_text_files_default_options() {
 		'ai'             => array(
 			'enabled'        => false,
 			'provider'       => 'google',
+			'free_tier'      => false,
 			'auto_publish'   => false,
 			'max_input_chars'=> 50000,
 			'last_run'       => 0,
@@ -218,6 +219,7 @@ function adrian_site_text_files_options() {
 	$options['ai'] = array(
 		'enabled'         => ! empty( $saved_ai['enabled'] ),
 		'provider'        => $provider,
+		'free_tier'       => ! empty( $saved_ai['free_tier'] ),
 		'auto_publish'    => ! empty( $saved_ai['auto_publish'] ),
 		'max_input_chars' => isset( $saved_ai['max_input_chars'] ) ? min( 100000, max( 10000, absint( $saved_ai['max_input_chars'] ) ) ) : 50000,
 		'last_run'        => isset( $saved_ai['last_run'] ) ? absint( $saved_ai['last_run'] ) : 0,
@@ -288,12 +290,15 @@ function adrian_site_text_files_generate_llms_full() {
 		return $cached;
 	}
 
-	$post_types = array( 'post' );
+	$post_types = array();
+	if ( ! empty( $settings['include_posts'] ) ) {
+		$post_types[] = 'post';
+	}
 	if ( ! empty( $settings['include_pages'] ) ) {
 		$post_types[] = 'page';
 	}
 
-	$items = get_posts(
+	$items = empty( $post_types ) ? array() : get_posts(
 		array(
 			'post_type'              => $post_types,
 			'post_status'            => 'publish',
@@ -314,8 +319,13 @@ function adrian_site_text_files_generate_llms_full() {
 		'',
 	);
 	$used_chars = strlen( implode( "\n", $sections ) );
+	$excluded_slugs = array( 'impressum', 'datenschutz', 'datenschutzerklaerung', 'privacy-policy', 'privacy', 'kontakt', 'kontaktformular' );
 
 	foreach ( $items as $item ) {
+		if ( 'page' === $item->post_type && in_array( sanitize_title( (string) $item->post_name ), $excluded_slugs, true ) ) {
+			continue;
+		}
+
 		$title = get_the_title( $item );
 		$url   = get_permalink( $item );
 		$body  = strip_shortcodes( (string) $item->post_content );
@@ -421,12 +431,18 @@ function adrian_site_text_files_ai_source() {
 	$options    = adrian_site_text_files_options();
 	$settings   = $options['generated'];
 	$max_chars  = (int) $options['ai']['max_input_chars'];
-	$post_types = array( 'post' );
+	if ( ! empty( $options['ai']['free_tier'] ) ) {
+		$max_chars = min( $max_chars, 20000 );
+	}
+	$post_types = array();
+	if ( ! empty( $settings['include_posts'] ) ) {
+		$post_types[] = 'post';
+	}
 	if ( ! empty( $settings['include_pages'] ) ) {
 		$post_types[] = 'page';
 	}
 
-	$items = get_posts(
+	$items = empty( $post_types ) ? array() : get_posts(
 		array(
 			'post_type'              => $post_types,
 			'post_status'            => 'publish',
@@ -511,11 +527,12 @@ function adrian_site_text_files_validate_ai_output( $content ) {
 /**
  * Generate text through the official WordPress AI Client API.
  *
- * @param string $prompt   Prompt text. It is bounded before the request.
- * @param string $provider Connector ID or `auto`.
+ * @param string $prompt    Prompt text. It is bounded before the request.
+ * @param string $provider  Connector ID or `auto`.
+ * @param bool   $free_tier Whether to use the conservative free-tier profile.
  * @return string|WP_Error
  */
-function adrian_site_text_files_ai_generate_text( $prompt, $provider ) {
+function adrian_site_text_files_ai_generate_text( $prompt, $provider, $free_tier = false ) {
 	if ( ! adrian_site_text_files_ai_api_available() ) {
 		return new WP_Error( 'ai_unavailable', 'Die offizielle WordPress-AI-Schnittstelle ist nicht verfügbar.' );
 	}
@@ -527,7 +544,7 @@ function adrian_site_text_files_ai_generate_text( $prompt, $provider ) {
 		$builder = wp_ai_client_prompt( $prompt )
 			->using_system_instruction( 'Du arbeitest als sorgfältiger Redakteur. Gib nur die angeforderte Textdatei zurück und halte dich strikt an die Quellen.' )
 			->using_temperature( 0.2 )
-			->using_max_tokens( 2200 );
+			->using_max_tokens( $free_tier ? 1400 : 2200 );
 		if ( 'auto' !== $provider ) {
 			$builder = $builder->using_provider( $provider );
 		}
@@ -571,14 +588,17 @@ function adrian_site_text_files_ai_refresh( $automatic = false ) {
 
 	try {
 		$source = adrian_site_text_files_ai_source();
-		$prompt = "Erstelle die vollständige, sachliche und natürliche Markdown-Datei llms.txt für diese persönliche WordPress-Website.\\n\\n";
-		$prompt .= "Regeln:\\n- Antworte ausschließlich mit Markdown-Text, ohne Codeblock und ohne Vorbemerkung.\\n";
-		$prompt .= "- Verwende ausschließlich die unten gelieferten Fakten und URLs. Erfinde keine Angebote, Personen, Produkte oder Aussagen.\\n";
-		$prompt .= "- Verlinke nur URLs derselben Website. Keine externen Links, E-Mail-Adressen oder Telefonnummern.\\n";
-		$prompt .= "- Schreibe zurückhaltend, persönlich und klar. Die Datei ist eine Orientierung für Suchsysteme und Sprachmodelle, keine Werbung.\\n\\n";
-		$prompt .= "QUELLEN:\\n" . $source;
+		$prompt = "Erstelle die vollständige, sachliche und natürliche Markdown-Datei llms.txt für diese persönliche WordPress-Website.\n\n";
+		if ( ! empty( $options['ai']['free_tier'] ) ) {
+			$prompt .= "Betriebsprofil: Der Betreiber verwendet möglicherweise den kostenlosen Gemini-Zugang. Halte die Antwort deshalb kompakt, stelle keine Rückfragen, nutze keine zusätzlichen Werkzeuge und gib nur die benötigte Datei zurück.\n\n";
+		}
+		$prompt .= "Regeln:\n- Antworte ausschließlich mit Markdown-Text, ohne Codeblock und ohne Vorbemerkung.\n";
+		$prompt .= "- Verwende ausschließlich die unten gelieferten Fakten und URLs. Erfinde keine Angebote, Personen, Produkte oder Aussagen.\n";
+		$prompt .= "- Verlinke nur URLs derselben Website. Keine externen Links, E-Mail-Adressen oder Telefonnummern.\n";
+		$prompt .= "- Schreibe zurückhaltend, persönlich und klar. Die Datei ist eine Orientierung für Suchsysteme und Sprachmodelle, keine Werbung.\n\n";
+		$prompt .= "QUELLEN:\n" . $source;
 
-		$content = adrian_site_text_files_ai_generate_text( $prompt, $options['ai']['provider'] );
+		$content = adrian_site_text_files_ai_generate_text( $prompt, $options['ai']['provider'], ! empty( $options['ai']['free_tier'] ) );
 		if ( is_wp_error( $content ) ) {
 			throw new Exception( $content->get_error_message() );
 		}
@@ -1078,6 +1098,7 @@ function adrian_site_text_files_ai_save_admin_form() {
 
 	$enabled       = ! empty( $submitted['enabled'] );
 	$auto_publish  = ! empty( $submitted['auto_publish'] );
+	$free_tier     = ! empty( $submitted['free_tier'] );
 	$confirmed     = ! empty( $_POST['ai_confirm'] );
 	$max_input     = isset( $submitted['max_input_chars'] ) ? min( 100000, max( 10000, absint( $submitted['max_input_chars'] ) ) ) : 50000;
 
@@ -1090,6 +1111,7 @@ function adrian_site_text_files_ai_save_admin_form() {
 
 	$options['ai']['enabled']         = $enabled;
 	$options['ai']['provider']        = $provider;
+	$options['ai']['free_tier']       = $free_tier;
 	$options['ai']['auto_publish']    = $auto_publish;
 	$options['ai']['max_input_chars'] = $max_input;
 	update_option( ADRIAN_SITE_TEXT_FILES_OPTION, $options, false );
@@ -1364,6 +1386,14 @@ function adrian_site_text_files_import_admin_form() {
 		$options['robots']['lines']   = isset( $import['robots']['lines'] ) && is_string( $import['robots']['lines'] ) ? adrian_site_text_files_sanitize_template( wp_slash( $import['robots']['lines'] ) ) : '';
 	}
 
+	if ( ! empty( $import['ai'] ) && is_array( $import['ai'] ) ) {
+		$options['ai']['enabled']      = ! empty( $import['ai']['enabled'] );
+		$options['ai']['provider']     = isset( $import['ai']['provider'] ) && is_string( $import['ai']['provider'] ) ? sanitize_key( $import['ai']['provider'] ) : $options['ai']['provider'];
+		$options['ai']['free_tier']    = ! empty( $import['ai']['free_tier'] );
+		$options['ai']['auto_publish'] = ! empty( $import['ai']['auto_publish'] );
+		$options['ai']['max_input_chars'] = isset( $import['ai']['max_input_chars'] ) ? min( 100000, max( 10000, absint( $import['ai']['max_input_chars'] ) ) ) : $options['ai']['max_input_chars'];
+	}
+
 	if ( ! empty( $errors ) ) {
 		return array( 'type' => 'error', 'message' => implode( ' ', $errors ) );
 	}
@@ -1390,6 +1420,7 @@ function adrian_site_text_files_export() {
 	$ai_export = array(
 		'enabled'         => $options['ai']['enabled'],
 		'provider'        => $options['ai']['provider'],
+		'free_tier'       => $options['ai']['free_tier'],
 		'auto_publish'    => $options['ai']['auto_publish'],
 		'max_input_chars' => $options['ai']['max_input_chars'],
 	);
@@ -1460,7 +1491,7 @@ function adrian_site_text_files_render_admin_page() {
 		<?php $ai = $options['ai']; ?>
 		<section class="adrian-stf-card adrian-stf-card--assistant" aria-labelledby="adrian-stf-ai-title">
 			<h2 id="adrian-stf-ai-title">Optionale KI-Aktualisierung</h2>
-			<p>WordPress nutzt dafür die offizielle AI-Client-Schnittstelle. Der stündliche Lauf erstellt nur einen neuen Vorschlag für <code>llms.txt</code>. Sichtbare Seiten, Beiträge, Theme-Dateien und Einstellungen werden niemals automatisch verändert.</p>
+			<p>WordPress nutzt dafür die offizielle AI-Client-Schnittstelle. Der stündliche Lauf erstellt nur einen neuen Vorschlag für <code>llms.txt</code>. Sichtbare Seiten, Beiträge, Theme-Dateien und Einstellungen werden niemals automatisch verändert. <code>llms-full.txt</code> kann dagegen unabhängig von KI aus veröffentlichten Inhalten neu aufgebaut werden.</p>
 			<p class="adrian-stf-meta"><strong>API:</strong> <?php echo $ai_status['available'] ? esc_html__( 'verfügbar', 'adrian-site-text-files' ) : esc_html__( 'nicht verfügbar', 'adrian-site-text-files' ); ?> · <strong>Connector:</strong> <code><?php echo esc_html( $ai_status['provider'] ); ?></code> · <strong>Zugang:</strong> <?php echo $ai_status['configured'] ? esc_html__( 'konfiguriert', 'adrian-site-text-files' ) : esc_html__( 'nicht erkannt', 'adrian-site-text-files' ); ?></p>
 			<p class="adrian-stf-help">Falls WordPress die Anfrage blockiert, musst du einmalig unter <a href="<?php echo esc_url( $ai_status['approval_url'] ); ?>">Tools → Connector Approvals</a> das Plugin <code>adrian-site-text-files</code> für den Connector freigeben. Die Freigabe bleibt eine WordPress-Sicherheitsentscheidung und wird nicht von diesem Plugin umgangen.</p>
 			<form method="post">
@@ -1479,6 +1510,8 @@ function adrian_site_text_files_render_admin_page() {
 						<input id="adrian-stf-ai-max-input" type="number" min="10000" max="100000" step="1000" name="ai[max_input_chars]" value="<?php echo esc_attr( $ai['max_input_chars'] ); ?>">
 					</div>
 				</div>
+				<p><label><input type="checkbox" name="ai[free_tier]" value="1" <?php checked( $ai['free_tier'] ); ?>> Kostenlosen Gemini-Tarif berücksichtigen</label></p>
+				<p class="adrian-stf-help">Dieses Betriebsprofil teilt der Anfrage mit, dass sparsam gearbeitet werden soll. Das Plugin begrenzt die Quellen dabei auf höchstens 20.000 Zeichen, kürzt die Antwort auf 1.400 Tokens und fordert keine zusätzlichen Werkzeuge oder Rückfragen an. Es aktiviert keinen Zugang, ändert keine Abrechnung und hebt keine Anbieterlimits auf.</p>
 				<p><label><input type="checkbox" name="ai[enabled]" value="1" <?php checked( $ai['enabled'] ); ?>> Stündliche Aktualisierung aktivieren</label></p>
 				<p><label><input type="checkbox" name="ai[auto_publish]" value="1" <?php checked( $ai['auto_publish'] ); ?>> Gültige Vorschläge automatisch in die öffentliche <code>llms.txt</code> übernehmen</label></p>
 				<p class="adrian-stf-help"><label><input type="checkbox" name="ai_confirm" value="1"> Ich bestätige, dass ausgewählte veröffentlichte Inhalte an den gewählten KI-Connector übertragen werden dürfen.</label></p>
@@ -1555,9 +1588,9 @@ function adrian_site_text_files_render_admin_page() {
 			<?php endforeach; ?>
 			<section class="adrian-stf-card">
 				<h2 style="margin-top: 0;">LLMs-full automatisch erzeugen</h2>
-				<p>Der Langkontext wird nur aus bereits veröffentlichten Inhalten gebaut und nach Änderungen automatisch neu erzeugt. Entwürfe, Papierkorb und Medien werden nicht einbezogen.</p>
+				<p>Der Langkontext wird ohne KI nur aus bereits veröffentlichten Beiträgen und ausdrücklich ausgewählten Informationsseiten gebaut und nach Änderungen automatisch neu erzeugt. Entwürfe, Papierkorb, Medien, Rechtsseiten und Kontaktseiten werden nicht einbezogen.</p>
 					<p><label><input type="checkbox" name="generated[include_posts]" value="1" <?php checked( $options['generated']['include_posts'] ); ?>> Beiträge einbeziehen</label></p>
-				<p><label><input type="checkbox" name="generated[include_pages]" value="1" <?php checked( $options['generated']['include_pages'] ); ?>> Seiten einbeziehen (einschließlich rechtlicher Seiten nur nach deiner ausdrücklichen Auswahl)</label></p>
+				<p><label><input type="checkbox" name="generated[include_pages]" value="1" <?php checked( $options['generated']['include_pages'] ); ?>> Öffentliche Informationsseiten einbeziehen (Rechts- und Kontaktseiten bleiben ausgeschlossen)</label></p>
 				<p><label>Maximale Anzahl Inhalte <input type="number" min="1" max="100" name="generated[max_items]" value="<?php echo esc_attr( $options['generated']['max_items'] ); ?>"></label>
 				<label style="margin-left: 1rem;">Maximale Zeichen <input type="number" min="10000" max="250000" step="1000" name="generated[max_chars]" value="<?php echo esc_attr( $options['generated']['max_chars'] ); ?>"></label></p>
 			</section>
