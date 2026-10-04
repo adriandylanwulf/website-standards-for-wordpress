@@ -41,6 +41,9 @@ Option und betrifft ausschließlich `llms.txt`. `llms-full.txt` kann unabhängig
 aus veröffentlichten Inhalten neu aufgebaut werden. Beiträge und Seiten selbst werden
 nicht automatisch umgeschrieben.
 
+Eine gespeicherte Datenfreigabe ist zusätzlich erforderlich. Fehlt sie, bleiben manuelle
+und automatische KI-Anfragen blockiert. Importe übernehmen diese Freigabe niemals.
+
 Das optionale Gemini-/Freitier-Profil reduziert den Quellenumfang auf höchstens 20.000
 Zeichen und die Ausgabe auf 1.400 Tokens. Es aktiviert keinen Zugang, ändert keine
 Abrechnung und hebt keine Anbieterlimits auf.
