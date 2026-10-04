@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0
+
+- Offizielle WordPress-AI-Client-Anbindung über `wp_ai_client_prompt()` ergänzt.
+- Optionaler, stündlicher KI-Vorschlag für `llms.txt`; standardmäßig deaktiviert.
+- Vorschau-Modus als Standard; automatische Veröffentlichung betrifft ausschließlich `llms.txt`.
+- Nur veröffentlichte Beiträge und ausdrücklich gewählte Seiten werden als Quelle genutzt; rechtliche Seiten, Medien und Entwürfe bleiben ausgeschlossen.
+- Eingabegrenze, Rate-Limits, Lock gegen parallele Läufe, Redaction direkter Kontaktangaben und Ausgabeprüfung ergänzt.
+- Connector-Freigabe von WordPress bleibt maßgeblich und wird nicht umgangen.
+
 ## 1.2.0
 
 - Geschützter Vorlagen-Assistent für die unterstützten Website-Standards.
