@@ -723,7 +723,8 @@ function adrian_site_text_files_generator_admin_form() {
 		return null;
 	}
 
-	if ( ! isset( $_POST['adrian_site_text_files_action'] ) || 'generate' !== sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) ) {
+	$action = isset( $_POST['adrian_site_text_files_action'] ) && is_string( $_POST['adrian_site_text_files_action'] ) ? sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) : '';
+	if ( 'generate' !== $action ) {
 		return null;
 	}
 
@@ -732,7 +733,7 @@ function adrian_site_text_files_generator_admin_form() {
 	}
 
 	check_admin_referer( 'adrian_site_text_files_generate' );
-	$key         = isset( $_POST['generator_key'] ) ? sanitize_key( wp_unslash( $_POST['generator_key'] ) ) : '';
+	$key         = isset( $_POST['generator_key'] ) && is_string( $_POST['generator_key'] ) ? sanitize_key( wp_unslash( $_POST['generator_key'] ) ) : '';
 	$definitions = adrian_site_text_files_definitions();
 
 	if ( ! isset( $definitions[ $key ] ) ) {
@@ -742,9 +743,10 @@ function adrian_site_text_files_generator_admin_form() {
 	$content = (string) $definitions[ $key ]['default'];
 
 	if ( 'security' === $key ) {
-		$contact = isset( $_POST['generator_contact'] ) ? sanitize_email( wp_unslash( $_POST['generator_contact'] ) ) : '';
+		$raw_contact = isset( $_POST['generator_contact'] ) && is_string( $_POST['generator_contact'] ) ? wp_unslash( $_POST['generator_contact'] ) : '';
+		$contact     = sanitize_email( $raw_contact );
 
-		if ( isset( $_POST['generator_contact'] ) && '' !== trim( (string) wp_unslash( $_POST['generator_contact'] ) ) && ! is_email( $contact ) ) {
+		if ( '' !== trim( $raw_contact ) && ! is_email( $contact ) ) {
 			return array( 'type' => 'error', 'message' => 'Bitte eine gültige E-Mail-Adresse für security.txt eingeben.' );
 		}
 
@@ -789,7 +791,8 @@ function adrian_site_text_files_save_admin_form() {
 		return null;
 	}
 
-	if ( ! isset( $_POST['adrian_site_text_files_action'] ) || 'save' !== sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) ) {
+	$action = isset( $_POST['adrian_site_text_files_action'] ) && is_string( $_POST['adrian_site_text_files_action'] ) ? sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) : '';
+	if ( 'save' !== $action ) {
 		return null;
 	}
 
@@ -873,7 +876,8 @@ function adrian_site_text_files_import_admin_form() {
 		return null;
 	}
 
-	if ( ! isset( $_POST['adrian_site_text_files_action'] ) || 'import' !== sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) ) {
+	$action = isset( $_POST['adrian_site_text_files_action'] ) && is_string( $_POST['adrian_site_text_files_action'] ) ? sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) : '';
+	if ( 'import' !== $action ) {
 		return null;
 	}
 
@@ -882,7 +886,7 @@ function adrian_site_text_files_import_admin_form() {
 	}
 
 	check_admin_referer( 'adrian_site_text_files_import' );
-	$raw = isset( $_POST['import_json'] ) ? wp_unslash( $_POST['import_json'] ) : '';
+	$raw = isset( $_POST['import_json'] ) && is_string( $_POST['import_json'] ) ? wp_unslash( $_POST['import_json'] ) : '';
 
 	if ( strlen( $raw ) > 1000000 ) {
 		return array( 'type' => 'error', 'message' => 'Der Import ist zu groß.' );
@@ -903,7 +907,7 @@ function adrian_site_text_files_import_admin_form() {
 			continue;
 		}
 
-		$content = isset( $files[ $key ]['content'] ) ? adrian_site_text_files_sanitize_template( wp_slash( (string) $files[ $key ]['content'] ) ) : $options['files'][ $key ]['content'];
+		$content = isset( $files[ $key ]['content'] ) && is_string( $files[ $key ]['content'] ) ? adrian_site_text_files_sanitize_template( wp_slash( $files[ $key ]['content'] ) ) : $options['files'][ $key ]['content'];
 		$enabled = ! empty( $files[ $key ]['enabled'] );
 		$check   = adrian_site_text_files_validate_content( $key, $content );
 
@@ -929,7 +933,7 @@ function adrian_site_text_files_import_admin_form() {
 
 	if ( ! empty( $import['robots'] ) && is_array( $import['robots'] ) ) {
 		$options['robots']['enabled'] = ! empty( $import['robots']['enabled'] );
-		$options['robots']['lines']   = isset( $import['robots']['lines'] ) ? adrian_site_text_files_sanitize_template( wp_slash( (string) $import['robots']['lines'] ) ) : '';
+		$options['robots']['lines']   = isset( $import['robots']['lines'] ) && is_string( $import['robots']['lines'] ) ? adrian_site_text_files_sanitize_template( wp_slash( $import['robots']['lines'] ) ) : '';
 	}
 
 	if ( ! empty( $errors ) ) {
