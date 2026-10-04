@@ -247,7 +247,16 @@ final class Adrian_Site_Cache {
 		}
 
 		$plugin_file = WP_CONTENT_DIR . '/plugins/adrian-site-cache/includes/drop-in.php';
-		$contents    = "<?php\n/* ADRIAN_SITE_CACHE_DROPIN */\nif ( defined( 'WP_CONTENT_DIR' ) ) {\n    $adrian_site_cache_dropin = WP_CONTENT_DIR . '/plugins/adrian-site-cache/includes/drop-in.php';\n    if ( is_readable( $adrian_site_cache_dropin ) ) {\n        require $adrian_site_cache_dropin;\n    }\n}\n";
+		$contents    = <<<'PHP'
+<?php
+/* ADRIAN_SITE_CACHE_DROPIN */
+if ( defined( 'WP_CONTENT_DIR' ) ) {
+    $adrian_site_cache_dropin = WP_CONTENT_DIR . '/plugins/adrian-site-cache/includes/drop-in.php';
+    if ( is_readable( $adrian_site_cache_dropin ) ) {
+        require $adrian_site_cache_dropin;
+    }
+}
+PHP;
 		if ( ! is_readable( $plugin_file ) || false === file_put_contents( $dropin, $contents, LOCK_EX ) ) {
 			return false;
 		}
