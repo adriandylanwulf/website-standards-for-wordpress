@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.1.1';
+	private const VERSION      = '1.1.2';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
@@ -478,13 +478,22 @@ PHP;
 	}
 
 	private function serve_cached_file( string $file ): void {
+		$gzip_file = $file . '.gz';
+		$use_gzip  = is_readable( $gzip_file ) && false !== stripos( (string) ( $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '' ), 'gzip' );
+		$body      = $use_gzip ? $gzip_file : $file;
 		if ( ! headers_sent() ) {
 			header( 'X-Adrian-Site-Cache: HIT' );
 			header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
+			header( 'Content-Length: ' . (string) filesize( $body ) );
+			header( 'Cache-Control: public, max-age=60, stale-while-revalidate=30' );
+			if ( $use_gzip ) {
+				header( 'Content-Encoding: gzip' );
+				header( 'Vary: Accept-Encoding' );
+			}
 		}
 
 		if ( 'HEAD' !== ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
-			readfile( $file );
+			readfile( $body );
 		}
 		exit;
 	}
@@ -595,15 +604,19 @@ PHP;
 	}
 
 	private function cache_stats(): array {
-		$dir   = $this->native_mode() ? $this->native_cache_dir() : WP_CONTENT_DIR . '/cache/supercache';
+		$dir   = $this->native_cache_dir();
 		$count = 0;
 		$bytes = 0;
-		if ( is_dir( $dir ) ) {
-			$iterator = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( $dir, FilesystemIterator::SKIP_DOTS ) );
-			foreach ( $iterator as $file ) {
-				if ( $file->isFile() ) {
-					$count++;
-					$bytes += $file->getSize();
+		if ( $this->native_mode() && is_dir( $dir ) ) {
+			foreach ( new DirectoryIterator( $dir ) as $file ) {
+				if ( $file->isDot() || ! $file->isFile() || 'html' !== $file->getExtension() || 'index.html' === $file->getFilename() ) {
+					continue;
+				}
+				$count++;
+				$bytes += $file->getSize();
+				$gzip = $file->getPathname() . '.gz';
+				if ( is_file( $gzip ) ) {
+					$bytes += (int) filesize( $gzip );
 				}
 			}
 		}
@@ -679,10 +692,55 @@ PHP;
 		$last_cron = (int) get_option( self::CRON_LAST_OPTION, 0 );
 		$modes   = self::cache_modes();
 		$mode    = isset( $modes[ $options['mode'] ] ) ? $options['mode'] : 'normal';
+		$messages = [
+			'saved'     => 'Cache-Einstellungen gespeichert.',
+			'purged'    => 'Alle Cache-Dateien wurden geleert.',
+			'collected' => 'Abgelaufene Cache-Dateien wurden bereinigt.',
+		];
 		?>
 		<div class="wrap adrian-site-cache-admin">
 			<style>
 				.adrian-site-cache-admin{max-width:1080px;margin-right:20px;color:#1d2327}.adrian-site-cache-admin .asc-header{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;background:#fff;border:1px solid #d9e2ec;border-top:4px solid #2271b1;border-radius:12px;padding:24px 28px;margin:18px 0 16px}.adrian-site-cache-admin .asc-kicker{margin:0 0 8px;color:#2271b1;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.adrian-site-cache-admin .asc-header h1{margin:0;color:#172b3a;font-size:29px;line-height:1.2}.adrian-site-cache-admin .asc-lead{max-width:680px;margin:10px 0 0;color:#536579;font-size:14px;line-height:1.55}.adrian-site-cache-admin .asc-status{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;padding:8px 12px;border:1px solid #bbd7c6;border-radius:999px;background:#f1faf4;color:#17683b;font-size:13px;font-weight:600;white-space:nowrap}.adrian-site-cache-admin .asc-status.is-paused{border-color:#e6c98c;background:#fff8e7;color:#7a4f00}.adrian-site-cache-admin .asc-status-dot{width:8px;height:8px;border-radius:50%;background:#2da05a}.adrian-site-cache-admin .asc-status.is-paused .asc-status-dot{background:#c58a00}.adrian-site-cache-admin .asc-card{background:#fff;border:1px solid #d9e2ec;border-radius:12px;padding:22px 24px;margin:16px 0;box-shadow:0 1px 2px rgba(23,43,58,.04)}.adrian-site-cache-admin .asc-overview{padding:12px}.adrian-site-cache-admin .asc-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.adrian-site-cache-admin .asc-stat{min-height:78px;padding:16px;background:#f6f9fc;border:1px solid #e1eaf2;border-radius:9px}.adrian-site-cache-admin .asc-stat-label{display:block;color:#536579;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase}.adrian-site-cache-admin .asc-stat strong{display:block;margin-top:6px;color:#173a5a;font-size:20px;line-height:1.25}.adrian-site-cache-admin .asc-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}.adrian-site-cache-admin .asc-section-label{margin:0 0 5px;color:#2271b1;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.adrian-site-cache-admin .asc-section-head h2{margin:0;color:#172b3a;font-size:20px}.adrian-site-cache-admin .asc-settings-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:24px;align-items:start}.adrian-site-cache-admin .asc-toggle{display:flex;gap:10px;margin:0 0 12px;padding:12px;background:#f8fafc;border:1px solid #e4ebf2;border-radius:8px}.adrian-site-cache-admin .asc-toggle input{flex:0 0 auto;margin-top:3px}.adrian-site-cache-admin .asc-toggle strong{display:block;color:#243b50}.adrian-site-cache-admin .asc-toggle small{display:block;margin-top:3px;color:#536579;font-size:12px;line-height:1.45}.adrian-site-cache-admin .asc-note{margin:16px 0 0;padding:12px 14px;border-left:3px solid #2271b1;background:#f0f6fc;color:#46596b;font-size:13px;line-height:1.55}.adrian-site-cache-admin label{display:block;margin:14px 0 6px;font-weight:600}.adrian-site-cache-admin select{box-sizing:border-box;width:100%;min-width:0;max-width:100%}.adrian-site-cache-admin .description{color:#536579;line-height:1.55}.adrian-site-cache-admin .notice-inline,.adrian-site-cache-admin .notice-info{padding:10px 12px;border-left:4px solid #dba617;background:#fff8e5}.adrian-site-cache-admin .notice-info{border-left-color:#2271b1;background:#f0f6fc}.adrian-site-cache-admin .asc-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:20px}.adrian-site-cache-admin .asc-actions form{margin:0}.adrian-site-cache-admin .asc-actions .button{min-height:38px;padding:4px 14px}.adrian-site-cache-admin .asc-mode-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:20px}.adrian-site-cache-admin .asc-mode{padding:14px;background:#fbfcfd;border:1px solid #dfe7ef;border-radius:8px;color:#46596b;line-height:1.5}.adrian-site-cache-admin .asc-mode.is-current{border-color:#2271b1;background:#f5f9fd;box-shadow:inset 3px 0 0 #2271b1}.adrian-site-cache-admin .asc-mode strong{display:block;margin-bottom:4px;color:#243b50}.adrian-site-cache-admin .asc-mode small{display:block;margin-top:7px;color:#536579;font-size:12px;line-height:1.5}.adrian-site-cache-admin .asc-mode small strong{display:inline;margin:0;color:#243b50}.adrian-site-cache-admin .asc-facts{margin:18px 0 0;padding-top:14px;border-top:1px solid #e1eaf2;color:#536579;font-size:13px}.adrian-site-cache-admin .asc-submit-row{margin:20px 0 0}.adrian-site-cache-admin .asc-maintenance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 18px}.adrian-site-cache-admin .asc-maintenance-fact{padding:13px 14px;background:#f8fafc;border:1px solid #e4ebf2;border-radius:8px}.adrian-site-cache-admin .asc-maintenance-fact span{display:block;color:#536579;font-size:12px}.adrian-site-cache-admin .asc-maintenance-fact strong{display:block;margin-top:4px;color:#243b50;font-size:15px}.adrian-site-cache-admin .asc-help{margin:0;color:#536579;font-size:13px;line-height:1.55}@media(max-width:800px){.adrian-site-cache-admin .asc-settings-grid{grid-template-columns:1fr}}@media(max-width:600px){.adrian-site-cache-admin{margin-right:10px}.adrian-site-cache-admin .asc-header{display:block;padding:20px}.adrian-site-cache-admin .asc-status{margin-top:16px}.adrian-site-cache-admin .asc-card{padding:18px}.adrian-site-cache-admin .asc-grid,.adrian-site-cache-admin .asc-mode-list,.adrian-site-cache-admin .asc-maintenance-grid{grid-template-columns:1fr}.adrian-site-cache-admin .asc-actions form,.adrian-site-cache-admin .asc-actions .button{width:100%}}
+			</style>
+			<style>
+				/* 1.1.2: quieter admin presentation with less dashboard chrome. */
+				.adrian-site-cache-admin .asc-header{align-items:center;border:0;border-left:4px solid #2271b1;border-radius:5px;padding:20px 22px;margin:18px 0 14px;box-shadow:none}
+				.adrian-site-cache-admin .asc-header h1{font-size:26px;font-weight:600}
+				.adrian-site-cache-admin .asc-kicker,.adrian-site-cache-admin .asc-section-label{letter-spacing:.04em;font-size:11px}
+				.adrian-site-cache-admin .asc-lead{margin-top:6px}
+				.adrian-site-cache-admin .asc-status{padding:0;border:0;border-radius:0;background:transparent;color:#17683b;font-size:13px;font-weight:600}
+				.adrian-site-cache-admin .asc-status.is-paused{background:transparent;color:#7a4f00}
+				.adrian-site-cache-admin .asc-status-dot{width:7px;height:7px}
+				.adrian-site-cache-admin .asc-card{border-radius:5px;padding:20px 22px;margin:14px 0;box-shadow:none}
+				.adrian-site-cache-admin .asc-overview{padding:0;background:transparent;border:0}
+				.adrian-site-cache-admin .asc-grid{gap:0;border-top:1px solid #d9e2ec;border-bottom:1px solid #d9e2ec}
+				.adrian-site-cache-admin .asc-stat{min-height:0;padding:14px 18px;background:#fff;border:0;border-right:1px solid #e1eaf2;border-radius:0}
+				.adrian-site-cache-admin .asc-stat:last-child{border-right:0}
+				.adrian-site-cache-admin .asc-stat strong{font-size:17px}
+				.adrian-site-cache-admin .asc-section-head{margin-bottom:14px}
+				.adrian-site-cache-admin .asc-section-head h2{font-size:19px;font-weight:600}
+				.adrian-site-cache-admin .asc-settings-grid{gap:30px}
+				.adrian-site-cache-admin .asc-toggle{padding:10px 12px;border-radius:5px;background:#fff}
+				.adrian-site-cache-admin .asc-note{margin-top:14px;padding:10px 12px}
+				.adrian-site-cache-admin .asc-mode-list{display:block;margin-top:18px;border-top:1px solid #dfe7ef}
+				.adrian-site-cache-admin .asc-mode{display:block;padding:0;border:0;border-bottom:1px solid #dfe7ef;border-radius:0;background:#fff;color:#46596b}
+				.adrian-site-cache-admin .asc-mode.is-current{border-color:#dfe7ef;background:#f7fafc;box-shadow:none}
+				.adrian-site-cache-admin .asc-mode summary{display:flex;align-items:center;gap:12px;padding:12px 10px;cursor:pointer;list-style:none}
+				.adrian-site-cache-admin .asc-mode summary::-webkit-details-marker{display:none}
+				.adrian-site-cache-admin .asc-mode summary:before{content:'›';display:inline-block;width:12px;color:#2271b1;font-size:20px;line-height:12px;transition:transform .15s ease}
+				.adrian-site-cache-admin .asc-mode[open] summary:before{transform:rotate(90deg)}
+				.adrian-site-cache-admin .asc-mode-title{flex:0 0 170px;color:#243b50;font-weight:600}
+				.adrian-site-cache-admin .asc-mode-summary{flex:1;color:#536579;font-size:13px}
+				.adrian-site-cache-admin .asc-mode-current{flex:0 0 auto;color:#2271b1;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase}
+				.adrian-site-cache-admin .asc-mode-body{padding:0 36px 14px;color:#536579;font-size:12px;line-height:1.5}
+				.adrian-site-cache-admin .asc-mode-body strong{display:inline;margin:0;color:#243b50}
+				.adrian-site-cache-admin .asc-facts{margin-top:14px;padding-top:12px}
+				.adrian-site-cache-admin .asc-maintenance-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid #d9e2ec;border-bottom:1px solid #d9e2ec}
+				.adrian-site-cache-admin .asc-maintenance-fact{padding:12px 16px;background:#fff;border:0;border-right:1px solid #e1eaf2;border-radius:0}
+				.adrian-site-cache-admin .asc-maintenance-fact:last-child{border-right:0}
+				.adrian-site-cache-admin .asc-actions{margin-top:16px}
+				.adrian-site-cache-admin .asc-actions .button{border-radius:4px}
+				@media(max-width:600px){.adrian-site-cache-admin .asc-header{padding:18px}.adrian-site-cache-admin .asc-grid,.adrian-site-cache-admin .asc-maintenance-grid{display:grid}.adrian-site-cache-admin .asc-stat,.adrian-site-cache-admin .asc-maintenance-fact{border-right:0;border-bottom:1px solid #e1eaf2}.adrian-site-cache-admin .asc-stat:last-child,.adrian-site-cache-admin .asc-maintenance-fact:last-child{border-bottom:0}.adrian-site-cache-admin .asc-mode summary{align-items:flex-start}.adrian-site-cache-admin .asc-mode-title{flex-basis:auto}.adrian-site-cache-admin .asc-mode-summary{display:none}.adrian-site-cache-admin .asc-mode-body{padding-left:34px}}
 			</style>
 			<div class="asc-header">
 				<div>
@@ -693,7 +751,7 @@ PHP;
 				<span class="asc-status <?php echo empty( $options['enabled'] ) || is_multisite() ? 'is-paused' : ''; ?>"><span class="asc-status-dot" aria-hidden="true"></span><?php echo empty( $options['enabled'] ) || is_multisite() ? 'Cache pausiert' : 'Cache aktiv'; ?></span>
 			</div>
 			<?php if ( is_multisite() ) : ?><div class="notice-inline"><p>Der native Datei-Cache ist auf Multisite deaktiviert, damit gemeinsame Cache- und Drop-in-Dateien keine Inhalte zwischen Websites vermischen können.</p></div><?php endif; ?>
-			<?php if ( in_array( $message, [ 'saved', 'purged', 'collected' ], true ) ) : ?><div class="notice notice-success is-dismissible"><p>Cache-Einstellung gespeichert.</p></div><?php endif; ?>
+			<?php if ( isset( $messages[ $message ] ) ) : ?><div class="notice notice-success is-dismissible"><p><?php echo esc_html( $messages[ $message ] ); ?></p></div><?php endif; ?>
 			<div class="asc-card asc-overview">
 				<div class="asc-grid">
 					<div class="asc-stat"><span class="asc-stat-label">Aktiver Weg</span><strong><?php echo esc_html( is_multisite() ? 'Deaktiviert (Multisite)' : 'Eigener Datei-Cache' ); ?></strong></div>
@@ -723,11 +781,10 @@ PHP;
 				</div>
 				<div class="asc-mode-list" aria-label="Vor- und Nachteile der Cache-Modi">
 					<?php foreach ( $modes as $mode_key => $mode_data ) : ?>
-						<div class="asc-mode <?php echo $mode === $mode_key ? 'is-current' : ''; ?>">
-							<strong><?php echo esc_html( $mode_data['label'] ); ?></strong>
-							<span><?php echo esc_html( $mode_data['description'] ); ?></span>
-							<small><strong>Vorteil:</strong> <?php echo esc_html( $mode_data['advantages'] ); ?><br><strong>Nachteil:</strong> <?php echo esc_html( $mode_data['disadvantages'] ); ?></small>
-						</div>
+						<details class="asc-mode <?php echo $mode === $mode_key ? 'is-current' : ''; ?>" <?php echo $mode === $mode_key ? 'open' : ''; ?>>
+							<summary><span class="asc-mode-title"><?php echo esc_html( $mode_data['label'] ); ?></span><span class="asc-mode-summary"><?php echo esc_html( $mode_data['description'] ); ?></span><?php if ( $mode === $mode_key ) : ?><span class="asc-mode-current">Aktuell</span><?php endif; ?></summary>
+							<div class="asc-mode-body"><strong>Vorteil:</strong> <?php echo esc_html( $mode_data['advantages'] ); ?><br><strong>Nachteil:</strong> <?php echo esc_html( $mode_data['disadvantages'] ); ?></div>
+						</details>
 					<?php endforeach; ?>
 				</div>
 				<p class="asc-facts">Aktueller Modus: <?php echo esc_html( $modes[ $mode ]['label'] ); ?> · <?php echo esc_html( $modes[ $mode ]['ttl'] ); ?> Sekunden · <?php echo esc_html( number_format_i18n( $modes[ $mode ]['max_files'] ) ); ?> Dateien · <?php echo esc_html( size_format( $modes[ $mode ]['max_bytes'] ) ); ?> Speicherlimit.</p>
@@ -738,6 +795,7 @@ PHP;
 				<div class="asc-maintenance-grid">
 					<div class="asc-maintenance-fact"><span>Letzte Leerung</span><strong><?php echo $options['last_purge'] ? esc_html( wp_date( 'd.m.Y H:i', (int) $options['last_purge'] ) ) : 'Noch nicht'; ?></strong></div>
 					<div class="asc-maintenance-fact"><span>Nächste Cache-Bereinigung</span><strong><?php echo $cron ? esc_html( wp_date( 'd.m.Y H:i', $cron ) ) : 'Nicht geplant'; ?></strong></div>
+					<div class="asc-maintenance-fact"><span>Letzter externer Cronlauf</span><strong><?php echo defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ? ( $last_cron ? esc_html( wp_date( 'd.m.Y H:i', $last_cron ) ) : 'Noch nicht' ) : 'Nicht verwendet'; ?></strong></div>
 				</div>
 				<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?>
 					<p class="notice-info">Der interne WordPress-Cron ist deaktiviert. Die Wartung wird über den externen Server-Cronjob ausgeführt. <?php echo $last_cron ? 'Letzter registrierter Cronlauf: ' . esc_html( wp_date( 'd.m.Y H:i', $last_cron ) ) . '.' : 'Ein externer Cronlauf wurde bisher noch nicht registriert.'; ?></p>
