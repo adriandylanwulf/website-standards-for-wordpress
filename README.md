@@ -16,7 +16,8 @@ optionale Endpunkte automatisch zu veröffentlichen.
 - vorbereitete, standardmäßig deaktivierte Endpunkte für `ai.txt`, `ai.json`, `tdmrep.json`, `ads.txt`, `app-ads.txt` und `opensearch.xml`
 - lokale Konfigurationsprüfung, Konflikthinweise sowie JSON-Export und -Import
 - geschützter Vorlagen-Assistent für neue oder zurückgesetzte Dateien
-- vorbereiteter Connector-Hook mit 5 Anfragen pro Minute und 50 pro Stunde je Benutzer
+- offizielle WordPress-AI-Client-Anbindung für einen optionalen, stündlichen `llms.txt`-Vorschlag
+- Connector-Hook mit 5 Anfragen pro Minute und 50 pro Stunde je Benutzer
 
 Das Plugin schreibt keine Dateien in das Webroot. Die Endpunkte werden virtuell über WordPress ausgeliefert. Inhalte werden nur aus bereits veröffentlichten Beiträgen und Seiten erzeugt, wenn diese Option im geschützten Backend aktiviert wurde.
 
@@ -29,7 +30,18 @@ Der Vorlagen-Assistent übernimmt nur lokale Startwerte. Werbeformate wie
 von den tatsächlich eingesetzten Werbepartnern abhängen. Es gibt dafür keine
 seriöse allgemeingültige Standardeinstellung.
 
-Das Plugin ruft selbst keinen externen KI-Dienst auf. Die optionale Connector-Schnittstelle bleibt ohne ausdrücklich angeschlossene Integration inaktiv.
+Die KI-Funktion ist standardmäßig deaktiviert. Sie nutzt ausschließlich die offizielle
+WordPress-AI-Client-Schnittstelle und einen im WordPress-Backend konfigurierten
+Connector, ohne API-Schlüssel selbst auszulesen. Automatische Läufe berücksichtigen
+nur veröffentlichte Inhalte, schließen Entwürfe, Medien und rechtliche Seiten aus und
+redigieren erkannte E-Mail-Adressen sowie Telefonnummern. Standardmäßig wird nur ein
+Vorschlag gespeichert; die automatische Veröffentlichung ist eine separate, explizite
+Option und betrifft ausschließlich `llms.txt`.
+
+Ist die WordPress-Experimentfunktion „Connector-Freigabe“ aktiv, muss der Administrator
+`adrian-site-text-files` unter `Tools → Connector Approvals` für den gewünschten
+Connector freigeben. Das Plugin umgeht diese Sperre nicht. Die stündliche Ausführung
+setzt außerdem einen funktionierenden WordPress-/Server-Cron voraus.
 
 ## Installation
 
