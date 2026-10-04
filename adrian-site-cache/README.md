@@ -2,7 +2,7 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.1.1
+Aktuelle Version: 1.1.2
 
 ## Konzept
 
@@ -25,6 +25,8 @@ Optional enthält das Plugin einen eigenen Datei-Cache als vollständige Ablösu
 - WP-CLI: `wp adrian-cache status`, `wp adrian-cache purge`, `wp adrian-cache gc`;
 - Anzeige des letzten registrierten externen Cronlaufs, wenn der interne WordPress-Cron deaktiviert ist;
 - keine externen Schriftarten, JavaScript-Bibliotheken oder Tracking-Funktionen.
+- Die Statusanzeige zählt nur echte HTML-Cache-Einträge und berücksichtigt deren GZIP-Varianten.
+- Der normale Datei-Cache liefert vorhandene GZIP-Varianten direkt aus, wenn der Browser sie unterstützt.
 
 ## Betrieb
 
