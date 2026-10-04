@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Schlanke, sichere Cache-Steuerung für eine persönliche WordPress-Website mit WP-Super-Cache-Integration und eigenem Datei-Cache als Fallback.
- * Version: 1.0.1
+ * Version: 1.0.2
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.0.1';
+	private const VERSION      = '1.0.2';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const CRON_HOOK    = 'adrian_site_cache_gc';
 	private const CACHE_FOLDER = 'adrian-site-cache';
@@ -146,7 +146,7 @@ final class Adrian_Site_Cache {
 		}
 
 		foreach ( headers_list() as $header ) {
-			if ( preg_match( '/^(set-cookie|location|content-disposition):/i', $header ) || preg_match( '/cache-control:.*(private|no-cache|no-store)/i', $header ) || preg_match( '/vary:.*cookie/i', $header ) ) {
+			if ( preg_match( '/^(set-cookie|location|content-disposition):/i', $header ) || preg_match( '/cache-control:.*(private|no-cache|no-store)/i', $header ) || preg_match( '/^vary:.*(\\*|cookie|user-agent|accept-language|authorization)/i', $header ) ) {
 				return $html;
 			}
 		}
