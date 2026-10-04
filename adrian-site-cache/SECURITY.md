@@ -6,13 +6,13 @@
 - Die frühe Auslieferung vor dem WordPress-Start ist standardmäßig deaktiviert und muss bewusst aktiviert werden.
 - Einstellungen sind auf Administratoren, Nonces und `manage_options` beschränkt.
 - Der eigene Cache löscht ausschließlich Dateien in seinem eigenen Verzeichnis.
-- WP Super Cache wird nicht parallel als zweiter Page-Cache betrieben.
+- Das Plugin arbeitet als einziger eigener Page-Cache; ein paralleler Full-Page-Cache ist nicht erforderlich.
 - Der Cache darf keine personalisierten Inhalte, Cookies oder Weiterleitungen speichern.
 - Bereits mit Cookies oder Authentifizierungsdaten eingehende Anfragen werden nicht im eigenen Cache gespeichert.
 - Antworten mit unbekannten `Vary`-Headern werden nicht gespeichert; ausschließlich `Accept-Encoding` wird als Cache-Variante zugelassen.
 - Der native Datei-Cache ist auf Single-Site begrenzt; 404-Antworten und beliebige unbekannte Pfade werden nicht gespeichert.
 - Der frühe Drop-in akzeptiert nur eine passende, gültige Hostangabe und verweigert veraltete Konfigurationen, Multisite-Konfigurationen sowie einen nicht-nativen Cache-Weg.
-- Der Wechsel von WP Super Cache wird über Plugin-Lifecycle-Hooks erkannt; der eigene Drop-in und seine Dateien werden dann entfernt, damit nicht zwei Full-Page-Caches parallel laufen.
+- Bei deaktivierter früher Auslieferung wird ein eigenes verwaistes `advanced-cache.php`-Drop-in entfernt, damit keine unbeabsichtigte frühe Ausführung zurückbleibt.
 - Cache-Schreibvorgänge und Bereinigungen werden über eine exklusive Sperrdatei serialisiert; Nutzdateien werden erst vollständig geschrieben und anschließend atomar umbenannt.
 
-Die Cache-Dateien liegen unter `wp-content/cache/adrian-site-cache/` und werden dort per Apache-Regel gegen direkten Zugriff geschützt. Bei Nginx- oder IIS-Betrieb sollte der Hoster zusätzlich den Zugriff auf diesen Ordner sperren; der sichere Standard dieser Version verwendet weiterhin den Controller-Modus mit WP Super Cache.
+Die Cache-Dateien liegen unter `wp-content/cache/adrian-site-cache/` und werden dort per Apache-Regel gegen direkten Zugriff geschützt. Bei Nginx- oder IIS-Betrieb sollte der Hoster zusätzlich den Zugriff auf diesen Ordner sperren. Die frühe Auslieferung bleibt standardmäßig deaktiviert und prüft zusätzlich Methode, Host, Cookies, Query-Strings, Authentifizierung, Pfadausschlüsse, TTL und Konfigurationsversion.
