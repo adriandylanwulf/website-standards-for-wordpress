@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.2
+
+- Administrationsoberfläche weiter beruhigt: weniger Kartenwirkung, flachere Statuszeilen und kompaktere Cache-Modus-Details.
+- Cache-Modi als zugängliche native Aufklappbereiche umgesetzt; nur der aktive Modus ist zunächst geöffnet.
+- Wartung zeigt den letzten externen Cronlauf direkt neben den übrigen Zeitpunkten.
+- Cache-Dateien im Dashboard zählen jetzt nur echte HTML-Einträge; interne Hilfsdateien werden nicht mehr als Seiten gezählt.
+- Der normale Datei-Cache nutzt vorhandene GZIP-Varianten direkt mit passenden Headern.
+
 ## 1.1.1
 
 - Administrationsoberfläche visuell überarbeitet: ruhige blaue Akzente, klarer Aktiv-Status und kompaktere Statuskarten.
