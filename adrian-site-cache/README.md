@@ -2,7 +2,7 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.1.0
+Aktuelle Version: 1.1.1
 
 ## Konzept
 
