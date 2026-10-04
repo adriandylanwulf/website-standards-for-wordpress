@@ -17,6 +17,7 @@ optionale Endpunkte automatisch zu veröffentlichen.
 - lokale Konfigurationsprüfung, Konflikthinweise sowie JSON-Export und -Import
 - geschützter Vorlagen-Assistent für neue oder zurückgesetzte Dateien
 - offizielle WordPress-AI-Client-Anbindung für einen optionalen, stündlichen `llms.txt`-Vorschlag
+- sparsames Gemini-/Freitier-Profil mit kleinerem Quellenumfang und kürzerer Ausgabe
 - Connector-Hook mit 5 Anfragen pro Minute und 50 pro Stunde je Benutzer
 
 Das Plugin schreibt keine Dateien in das Webroot. Die Endpunkte werden virtuell über WordPress ausgeliefert. Inhalte werden nur aus bereits veröffentlichten Beiträgen und Seiten erzeugt, wenn diese Option im geschützten Backend aktiviert wurde.
@@ -36,7 +37,13 @@ Connector, ohne API-Schlüssel selbst auszulesen. Automatische Läufe berücksic
 nur veröffentlichte Inhalte, schließen Entwürfe, Medien und rechtliche Seiten aus und
 redigieren erkannte E-Mail-Adressen sowie Telefonnummern. Standardmäßig wird nur ein
 Vorschlag gespeichert; die automatische Veröffentlichung ist eine separate, explizite
-Option und betrifft ausschließlich `llms.txt`.
+Option und betrifft ausschließlich `llms.txt`. `llms-full.txt` kann unabhängig von KI
+aus veröffentlichten Inhalten neu aufgebaut werden. Beiträge und Seiten selbst werden
+nicht automatisch umgeschrieben.
+
+Das optionale Gemini-/Freitier-Profil reduziert den Quellenumfang auf höchstens 20.000
+Zeichen und die Ausgabe auf 1.400 Tokens. Es aktiviert keinen Zugang, ändert keine
+Abrechnung und hebt keine Anbieterlimits auf.
 
 Ist die WordPress-Experimentfunktion „Connector-Freigabe“ aktiv, muss der Administrator
 `adrian-site-text-files` unter `Tools → Connector Approvals` für den gewünschten
