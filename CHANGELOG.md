@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.1
+
+- Option „Kostenlosen Gemini-Tarif berücksichtigen“ ergänzt.
+- Sparsames KI-Profil mit maximal 20.000 Quellzeichen und 1.400 Ausgabetokens ergänzt.
+- Prompt im Plugin korrigiert, sodass Zeilenumbrüche tatsächlich als solche übertragen werden.
+- `llms-full.txt` berücksichtigt die Auswahl für Beiträge und schließt Rechts- sowie Kontaktseiten aus.
+- Import und Export der nicht geheimen Freitier-Einstellung ergänzt.
+
 ## 1.3.0
 
 - Offizielle WordPress-AI-Client-Anbindung über `wp_ai_client_prompt()` ergänzt.
