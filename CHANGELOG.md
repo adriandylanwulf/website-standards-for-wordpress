@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.2
+
+- Persistente Datenfreigabe als zusätzliche Fail-closed-Sperre ergänzt.
+- Bestehende oder importierte KI-Automatik läuft erst nach erneuter ausdrücklicher Bestätigung.
+- Statusanzeige für die Datenfreigabe ergänzt.
+
 ## 1.3.1
 
 - Option „Kostenlosen Gemini-Tarif berücksichtigen“ ergänzt.
