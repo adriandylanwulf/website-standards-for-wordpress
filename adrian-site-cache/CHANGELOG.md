@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.7
+
+- Cache-Modi „Kaum Cache“, „Leicht“, „Normal“ und „Stark“ mit verständlichen Vor- und Nachteilen ergänzt.
+- Veraltete Drop-in-Konfigurationen werden beim Update nicht mehr ausgeliefert; alte native Dateien werden beim Upgrade verworfen.
+- Frühe Auslieferung verweigert ungültige oder fehlende Hosts, Multisite-Konfigurationen und nicht-native Konfigurationen.
+- Wechsel zu WP Super Cache wird über Aktivierungswechsel erkannt und räumt den eigenen Drop-in auf.
+- Cache-Schreibvorgänge und Bereinigungen werden serialisiert; HTML- und GZIP-Dateien, Konfiguration und Drop-in werden atomar geschrieben.
+- Veraltete `Pragma`- und `Expires`-Antworten sowie die Schutzdatei `index.html` werden korrekt berücksichtigt.
+
 ## 1.0.6
 
 - Nativer Datei-Cache auf Single-Site begrenzt, um gemeinsame Multisite-Cache-Dateien auszuschließen.

@@ -11,3 +11,8 @@
 - Bereits mit Cookies oder Authentifizierungsdaten eingehende Anfragen werden nicht im eigenen Cache gespeichert.
 - Antworten mit unbekannten `Vary`-Headern werden nicht gespeichert; ausschließlich `Accept-Encoding` wird als Cache-Variante zugelassen.
 - Der native Datei-Cache ist auf Single-Site begrenzt; 404-Antworten und beliebige unbekannte Pfade werden nicht gespeichert.
+- Der frühe Drop-in akzeptiert nur eine passende, gültige Hostangabe und verweigert veraltete Konfigurationen, Multisite-Konfigurationen sowie einen nicht-nativen Cache-Weg.
+- Der Wechsel von WP Super Cache wird über Plugin-Lifecycle-Hooks erkannt; der eigene Drop-in und seine Dateien werden dann entfernt, damit nicht zwei Full-Page-Caches parallel laufen.
+- Cache-Schreibvorgänge und Bereinigungen werden über eine exklusive Sperrdatei serialisiert; Nutzdateien werden erst vollständig geschrieben und anschließend atomar umbenannt.
+
+Die Cache-Dateien liegen unter `wp-content/cache/adrian-site-cache/` und werden dort per Apache-Regel gegen direkten Zugriff geschützt. Bei Nginx- oder IIS-Betrieb sollte der Hoster zusätzlich den Zugriff auf diesen Ordner sperren; der sichere Standard dieser Version verwendet weiterhin den Controller-Modus mit WP Super Cache.

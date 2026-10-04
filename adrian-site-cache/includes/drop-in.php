@@ -10,6 +10,10 @@ if ( defined( 'DONOTCACHEPAGE' ) && DONOTCACHEPAGE ) {
 	return;
 }
 
+if ( defined( 'MULTISITE' ) && MULTISITE ) {
+	return;
+}
+
 $adrian_site_cache_request_method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 $adrian_site_cache_request_uri    = (string) ( $_SERVER['REQUEST_URI'] ?? '/' );
 $adrian_site_cache_query          = (string) ( $_SERVER['QUERY_STRING'] ?? '' );
@@ -37,6 +41,9 @@ $adrian_site_cache_early   = false;
 if ( is_readable( $adrian_site_cache_config ) ) {
 	$adrian_site_cache_values = require $adrian_site_cache_config;
 	if ( is_array( $adrian_site_cache_values ) ) {
+		if ( '1.0.7' !== (string) ( $adrian_site_cache_values['version'] ?? '' ) || 'native' !== (string) ( $adrian_site_cache_values['engine'] ?? '' ) || ! empty( $adrian_site_cache_values['multisite'] ) ) {
+			return;
+		}
 		$adrian_site_cache_ttl     = max( 60, (int) ( $adrian_site_cache_values['ttl'] ?? 900 ) );
 		$adrian_site_cache_enabled = ! empty( $adrian_site_cache_values['enabled'] );
 		$adrian_site_cache_early   = ! empty( $adrian_site_cache_values['early'] );
@@ -50,7 +57,10 @@ if ( ! $adrian_site_cache_early || '' === $adrian_site_cache_key_prefix ) {
 
 $adrian_site_cache_configured_host = strtolower( (string) parse_url( $adrian_site_cache_key_prefix, PHP_URL_HOST ) );
 $adrian_site_cache_request_host    = strtolower( (string) parse_url( 'https://' . (string) ( $_SERVER['HTTP_HOST'] ?? '' ), PHP_URL_HOST ) );
-if ( '' !== $adrian_site_cache_configured_host && '' !== $adrian_site_cache_request_host && $adrian_site_cache_configured_host !== $adrian_site_cache_request_host ) {
+$adrian_site_cache_valid_host = static function ( string $host ): bool {
+	return '' !== $host && ( false !== filter_var( $host, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME ) || false !== filter_var( $host, FILTER_VALIDATE_IP ) );
+};
+if ( ! $adrian_site_cache_valid_host( $adrian_site_cache_configured_host ) || ! $adrian_site_cache_valid_host( $adrian_site_cache_request_host ) || $adrian_site_cache_configured_host !== $adrian_site_cache_request_host ) {
 	return;
 }
 

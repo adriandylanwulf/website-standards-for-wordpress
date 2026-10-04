@@ -2,7 +2,7 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.0.6
+Aktuelle Version: 1.0.7
 
 ## Konzept
 
@@ -21,9 +21,16 @@ Optional enthält das Plugin einen eigenen Datei-Cache als vollständige Ablösu
 - 404-Antworten werden nicht gespeichert; der native Modus ist auf Single-Site begrenzt;
 - atomare Dateischreibung und begrenzte Cache-Größe;
 - Administrator-Seite mit Status, Größe, TTL und manueller Wartung;
+- vier verständliche Cache-Modi: Kaum Cache, Leicht, Normal und Stark, jeweils mit erklärten Vor- und Nachteilen;
 - WP-CLI: `wp adrian-cache status`, `wp adrian-cache purge`, `wp adrian-cache gc`;
 - keine externen Schriftarten, JavaScript-Bibliotheken oder Tracking-Funktionen.
 
 ## Betrieb
 
 Auf dieser Website bleibt zunächst „WP Super Cache steuern“ aktiviert. Für die Ablösung wird zuerst ein Testfenster mit dem eigenen Datei-Cache durchgeführt: WP Super Cache deaktivieren, eigenen Cache aktivieren, Startseite, Blog, Kontaktformular, Login, Datenschutz, Impressum und mobile Ansichten prüfen und anschließend Cache-Hit/Miss sowie Formularfunktion testen. Die frühe Auslieferung wird erst danach bewusst eingeschaltet.
+
+## Wartung bei Mittwald
+
+Das Plugin registriert einen stündlichen WordPress-Cronjob für die Bereinigung. Wenn Mittwald den Endpunkt `/html/adrian-dylan-wulf/wp-cron.php` alle fünf Minuten aufruft, werden fällige WordPress-Aufgaben automatisch ausgeführt. Die fünf Minuten sind der Prüfintervall des Server-Cronjobs; die eigentliche Cache-Bereinigung bleibt auf den registrierten stündlichen Termin begrenzt.
+
+Der Modus „Normal“ ist für diese Website der empfohlene Ausgangspunkt. „Stark“ erhöht die Lebensdauer des Caches, schaltet aber niemals automatisch die frühe Drop-in-Auslieferung ein.
