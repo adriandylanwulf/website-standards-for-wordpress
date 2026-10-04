@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0
+
+- Geschützter Vorlagen-Assistent für die unterstützten Website-Standards.
+- Security.txt kann mit einem geprüften Kontaktwert vorbereitet werden.
+- Werbe- und experimentelle Endpunkte bleiben beim Assistenten bewusst deaktiviert.
+- Lokale, responsive Admin-Oberfläche ohne externe Assets oder Schriften.
+- Laufzeitprüfung verhindert die Ausgabe fehlerhaft gewordener JSON-Endpunkte.
+- Fehler beim Speichern der Generator-/LLM-Einstellungen behoben.
+
 ## 1.1.1
 
 - Erweiterter Standards-Manager mit automatischem `llms-full.txt`.
@@ -14,4 +23,3 @@
 - Erste stabile Version mit `security.txt`, `llms.txt`, `humans.txt` und Webmanifest.
 - Einzelbenutzer-Sperre für den WordPress-Editor.
 - Dynamische URL-, Jahres- und Ablaufdatum-Platzhalter.
-
