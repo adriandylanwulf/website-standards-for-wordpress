@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Website-Textdateien für Adrian Dylan Wulf
  * Description: Verwaltet maschinenlesbare Website-Standards wie security.txt, robots.txt-Erweiterungen, LLM-Kontext und Webmetadaten.
- * Version: 1.1.1
+ * Version: 1.2.0
  * Author: Adrian Dylan Wulf
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.1.1' );
+define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.2.0' );
 define( 'ADRIAN_SITE_TEXT_FILES_OPTION', 'adrian_site_text_files_options' );
 define( 'ADRIAN_SITE_TEXT_FILES_QUERY_VAR', 'adrian_site_text_file' );
 
@@ -430,9 +430,21 @@ function adrian_site_text_files_serve_endpoint() {
 	header( 'Content-Type: ' . $definitions[ $key ]['mime'] );
 	header( 'X-Content-Type-Options: nosniff' );
 	header( 'Cache-Control: public, max-age=300, must-revalidate' );
+	$content = adrian_site_text_files_render( $options['files'][ $key ]['content'] );
+
+	// Site name and URL tokens can change after an admin save. Fail closed
+	// instead of serving malformed JSON to browsers or consuming systems.
+	if ( in_array( $key, array( 'manifest', 'tdmrep', 'ai_json' ), true ) ) {
+		json_decode( $content, true );
+		if ( JSON_ERROR_NONE !== json_last_error() ) {
+			status_header( 500 );
+			header( 'Cache-Control: no-store' );
+			exit;
+		}
+	}
 
 	if ( 'HEAD' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? (string) $_SERVER['REQUEST_METHOD'] : 'GET' ) ) {
-		echo adrian_site_text_files_render( $options['files'][ $key ]['content'] );
+		echo $content;
 	}
 
 	exit;
@@ -675,6 +687,99 @@ function adrian_site_text_files_admin_menu() {
 add_action( 'admin_menu', 'adrian_site_text_files_admin_menu' );
 
 /**
+ * Load a small, local-only admin stylesheet on the plugin screen.
+ *
+ * No frontend assets or external fonts are loaded. This keeps the public
+ * website unchanged and makes the editor easier to scan on smaller screens.
+ *
+ * @param string $hook_suffix Current admin screen hook.
+ * @return void
+ */
+function adrian_site_text_files_admin_styles( $hook_suffix ) {
+	if ( 'settings_page_adrian-site-text-files' !== $hook_suffix || ! adrian_site_text_files_can_manage() ) {
+		return;
+	}
+
+	wp_register_style( 'adrian-site-text-files-admin', false, array(), ADRIAN_SITE_TEXT_FILES_VERSION );
+	wp_enqueue_style( 'adrian-site-text-files-admin' );
+	wp_add_inline_style(
+		'adrian-site-text-files-admin',
+		'.adrian-stf-shell{max-width:1100px}.adrian-stf-intro{max-width:760px;color:#50575e;font-size:14px}.adrian-stf-summary{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0}.adrian-stf-summary span{display:inline-flex;align-items:center;gap:6px;padding:7px 11px;border:1px solid #dcdcde;border-radius:999px;background:#fff}.adrian-stf-card{margin:18px 0;padding:20px 22px;border:1px solid #dcdcde;border-radius:8px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04)}.adrian-stf-card h2{margin:0 0 8px}.adrian-stf-card p{max-width:820px}.adrian-stf-card--assistant{border-top:4px solid #1769aa;background:linear-gradient(180deg,#f6faff 0,#fff 130px)}.adrian-stf-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}.adrian-stf-field{display:flex;flex-direction:column;gap:5px}.adrian-stf-field label{font-weight:600}.adrian-stf-field input,.adrian-stf-field select{max-width:100%}.adrian-stf-help{color:#50575e;font-size:13px}.adrian-stf-meta{color:#50575e}.adrian-stf-status{font-weight:600}.adrian-stf-status-valid{color:#16794c}.adrian-stf-status-warning{color:#996800}.adrian-stf-status-error{color:#b32d2e}.adrian-stf-status-disabled{color:#50575e}.adrian-stf-code{width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.45}.adrian-stf-actions{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.adrian-stf-divider{border:0;border-top:1px solid #dcdcde;margin:22px 0}@media(max-width:782px){.adrian-stf-card{padding:16px}.adrian-stf-grid{grid-template-columns:1fr}.adrian-stf-actions{align-items:flex-start;flex-direction:column}.adrian-stf-actions .button{width:100%;text-align:center}}'
+	);
+}
+add_action( 'admin_enqueue_scripts', 'adrian_site_text_files_admin_styles' );
+
+/**
+ * Apply a generated starter template from the locked admin screen.
+ *
+ * The generator never enables an optional endpoint implicitly. For ads.txt
+ * and app-ads.txt the starter is intentionally explanatory because valid
+ * seller rows depend on the actual advertising partners of the site.
+ *
+ * @return array{type:string,message:string}|null
+ */
+function adrian_site_text_files_generator_admin_form() {
+	if ( 'POST' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? (string) $_SERVER['REQUEST_METHOD'] : '' ) ) {
+		return null;
+	}
+
+	if ( ! isset( $_POST['adrian_site_text_files_action'] ) || 'generate' !== sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) ) {
+		return null;
+	}
+
+	if ( ! adrian_site_text_files_can_manage() ) {
+		return array( 'type' => 'error', 'message' => 'Zugriff verweigert.' );
+	}
+
+	check_admin_referer( 'adrian_site_text_files_generate' );
+	$key         = isset( $_POST['generator_key'] ) ? sanitize_key( wp_unslash( $_POST['generator_key'] ) ) : '';
+	$definitions = adrian_site_text_files_definitions();
+
+	if ( ! isset( $definitions[ $key ] ) ) {
+		return array( 'type' => 'error', 'message' => 'Für diese Auswahl gibt es keine Vorlage.' );
+	}
+
+	$content = (string) $definitions[ $key ]['default'];
+
+	if ( 'security' === $key ) {
+		$contact = isset( $_POST['generator_contact'] ) ? sanitize_email( wp_unslash( $_POST['generator_contact'] ) ) : '';
+
+		if ( isset( $_POST['generator_contact'] ) && '' !== trim( (string) wp_unslash( $_POST['generator_contact'] ) ) && ! is_email( $contact ) ) {
+			return array( 'type' => 'error', 'message' => 'Bitte eine gültige E-Mail-Adresse für security.txt eingeben.' );
+		}
+
+		if ( '' !== $contact ) {
+			$content = preg_replace( '/^Contact:\s*.*$/mi', 'Contact: mailto:' . $contact, $content );
+		}
+	}
+
+	$validation = adrian_site_text_files_validate_content( $key, $content );
+	if ( is_wp_error( $validation ) ) {
+		return array( 'type' => 'error', 'message' => $validation->get_error_message() );
+	}
+
+	$options = adrian_site_text_files_options();
+	$enable  = ! empty( $_POST['generator_enable'] );
+
+	// Optional endpoint templates stay disabled unless the owner explicitly
+	// enables them. Even then, ads.txt needs real seller rows before use.
+	$options['files'][ $key ]['content'] = adrian_site_text_files_sanitize_template( $content );
+	if ( $enable && ! in_array( $key, array( 'ads', 'app_ads', 'tdmrep', 'ai', 'ai_json', 'opensearch' ), true ) ) {
+		$options['files'][ $key ]['enabled'] = true;
+	}
+
+	update_option( ADRIAN_SITE_TEXT_FILES_OPTION, $options, false );
+	adrian_site_text_files_invalidate_generated();
+
+	$message = $definitions[ $key ]['label'] . ' wurde mit der sicheren Startvorlage vorbereitet.';
+	if ( in_array( $key, array( 'ads', 'app_ads' ), true ) ) {
+		$message .= ' Echte Verkäuferzeilen müssen vor einer Veröffentlichung ergänzt werden.';
+	}
+
+	return array( 'type' => 'updated', 'message' => $message );
+}
+
+/**
  * Save submitted templates for the locked user only.
  *
  * @return array{type:string,message:string}|null
@@ -695,6 +800,7 @@ function adrian_site_text_files_save_admin_form() {
 		);
 	}
 
+	$options  = adrian_site_text_files_options();
 	$generated = $options['generated'];
 	if ( isset( $_POST['generated'] ) && is_array( $_POST['generated'] ) ) {
 		$submitted_generated           = wp_unslash( $_POST['generated'] );
@@ -714,7 +820,6 @@ function adrian_site_text_files_save_admin_form() {
 	check_admin_referer( 'adrian_site_text_files_save' );
 
 	$definitions = adrian_site_text_files_definitions();
-	$options     = adrian_site_text_files_options();
 	$submitted   = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? $_POST['files'] : array();
 	$errors      = array();
 	$next_files  = array();
@@ -878,7 +983,10 @@ function adrian_site_text_files_render_admin_page() {
 		wp_die( esc_html__( 'Du hast keine Berechtigung für diese Seite.', 'adrian-site-text-files' ), 403 );
 	}
 
-	$notice      = adrian_site_text_files_import_admin_form();
+	$notice      = adrian_site_text_files_generator_admin_form();
+	if ( ! is_array( $notice ) ) {
+		$notice = adrian_site_text_files_import_admin_form();
+	}
 	if ( ! is_array( $notice ) ) {
 		$notice = adrian_site_text_files_save_admin_form();
 	}
@@ -888,34 +996,65 @@ function adrian_site_text_files_render_admin_page() {
 	$export_url  = wp_nonce_url( admin_url( 'admin-post.php?action=adrian_site_text_files_export' ), 'adrian_site_text_files_export' );
 	$allowed_user = get_user_by( 'id', (int) $options['allowed_user_id'] );
 	?>
-	<div class="wrap">
+	<div class="wrap adrian-stf-shell">
 		<h1><?php echo esc_html__( 'Website-Standards', 'adrian-site-text-files' ); ?></h1>
-		<p>Ein zentraler Manager für maschinenlesbare Website-Standards. Die Seite ist ausschließlich für den festgelegten WordPress-Administrator freigeschaltet.</p>
+		<p class="adrian-stf-intro">Ein zentraler Manager für kleine, maschinenlesbare Website-Standards. Die Seite ist ausschließlich für den festgelegten WordPress-Administrator freigeschaltet.</p>
 		<?php if ( is_array( $notice ) ) : ?>
 			<div class="notice notice-<?php echo esc_attr( $notice['type'] ); ?> is-dismissible"><p><?php echo esc_html( $notice['message'] ); ?></p></div>
 		<?php endif; ?>
-		<p><strong>Gesperrter Nutzer:</strong> <?php echo $allowed_user ? esc_html( $allowed_user->user_login ) : esc_html__( 'Noch nicht festgelegt', 'adrian-site-text-files' ); ?></p>
-		<p>Verfügbare Platzhalter: <code>{site_url}</code>, <code>{site_name}</code>, <code>{year}</code>, <code>{security_expires}</code> und <code>{llms_full}</code>. Sie werden erst bei der Ausgabe ersetzt; dadurch bleiben die Dateien aktuell, ohne deine Texte zu überschreiben.</p>
-		<div style="max-width: 960px; margin: 1rem 0; padding: 1rem 1.25rem; border-left: 4px solid #1769aa; background: #f0f6fc;">
-			<strong>Lokale Prüfung:</strong>
-			<?php echo esc_html( $validation['valid'] ); ?> gültig · <?php echo esc_html( $validation['warnings'] ); ?> Hinweise · <?php echo esc_html( $validation['errors'] ); ?> Fehler
-			· <a href="<?php echo esc_url( $export_url ); ?>">Konfiguration exportieren</a>
+		<p class="adrian-stf-meta"><strong>Gesperrter Nutzer:</strong> <?php echo $allowed_user ? esc_html( $allowed_user->user_login ) : esc_html__( 'Noch nicht festgelegt', 'adrian-site-text-files' ); ?></p>
+		<p class="adrian-stf-help">Verfügbare Platzhalter: <code>{site_url}</code>, <code>{site_name}</code>, <code>{year}</code>, <code>{security_expires}</code> und <code>{llms_full}</code>. Sie werden erst bei der Ausgabe ersetzt; dadurch bleiben die Dateien aktuell, ohne deine Texte zu überschreiben.</p>
+		<div class="adrian-stf-summary" aria-label="Prüfzusammenfassung">
+			<span><strong><?php echo esc_html( $validation['valid'] ); ?></strong> gültig</span>
+			<span><strong><?php echo esc_html( $validation['warnings'] ); ?></strong> Hinweise</span>
+			<span><strong><?php echo esc_html( $validation['errors'] ); ?></strong> Fehler</span>
+			<a class="button button-secondary" href="<?php echo esc_url( $export_url ); ?>">Konfiguration exportieren</a>
+		</div>
+		<div class="notice notice-info inline">
 			<?php if ( ! has_filter( 'adrian_site_text_files_ai_request' ) ) : ?>
-				<br><small>Kein KI-Connector ist angeschlossen. Das Plugin überträgt keine Inhalte automatisch nach außen. Für eine spätere Integration gelten 5 Anfragen pro Minute und 50 pro Stunde je Benutzer.</small>
+				<p><strong>Privatsphäre:</strong> Kein KI-Connector ist angeschlossen. Das Plugin überträgt keine Inhalte automatisch nach außen. Für eine spätere Integration gelten 5 Anfragen pro Minute und 50 pro Stunde je Benutzer.</p>
 			<?php endif; ?>
 		</div>
+
+		<section class="adrian-stf-card adrian-stf-card--assistant" aria-labelledby="adrian-stf-generator-title">
+			<h2 id="adrian-stf-generator-title">Vorlagen-Assistent</h2>
+			<p>Wähle eine Datei aus, übernimm die geprüfte Startvorlage und passe sie danach im Editor an. Das Anwenden schaltet optionale Endpunkte nicht automatisch frei.</p>
+			<form method="post">
+				<?php wp_nonce_field( 'adrian_site_text_files_generate' ); ?>
+				<input type="hidden" name="adrian_site_text_files_action" value="generate">
+				<div class="adrian-stf-grid">
+					<div class="adrian-stf-field">
+						<label for="adrian-stf-generator-key">Datei</label>
+						<select id="adrian-stf-generator-key" name="generator_key">
+							<?php foreach ( $definitions as $generator_key => $generator_definition ) : ?>
+								<option value="<?php echo esc_attr( $generator_key ); ?>"><?php echo esc_html( $generator_definition['label'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="adrian-stf-field">
+						<label for="adrian-stf-generator-contact">Security-Kontakt <span class="adrian-stf-help">(optional)</span></label>
+						<input id="adrian-stf-generator-contact" type="email" name="generator_contact" placeholder="security@example.org" autocomplete="email">
+					</div>
+				</div>
+				<p class="adrian-stf-help"><label><input type="checkbox" name="generator_enable" value="1"> Nach dem Anwenden veröffentlichen, sofern es sich nicht um einen optionalen Experiment- oder Werbe-Endpunkt handelt.</label></p>
+				<div class="adrian-stf-actions">
+					<?php submit_button( 'Startvorlage übernehmen', 'primary', 'submit', false ); ?>
+					<span class="adrian-stf-help">Bei <code>ads.txt</code> und <code>app-ads.txt</code> sind echte Verkäuferzeilen erforderlich; dafür gibt es keine allgemeingültige Website-Vorlage.</span>
+				</div>
+			</form>
+		</section>
 
 		<form method="post">
 			<?php wp_nonce_field( 'adrian_site_text_files_save' ); ?>
 			<input type="hidden" name="adrian_site_text_files_action" value="save">
 			<?php foreach ( $definitions as $key => $definition ) : ?>
 				<?php $file = $options['files'][ $key ]; ?>
-				<section style="max-width: 960px; margin: 1.5rem 0; padding: 1rem 1.25rem; border: 1px solid #ccd0d4; background: #fff;">
+				<section class="adrian-stf-card">
 					<h2 style="margin-top: 0;"><?php echo esc_html( $definition['label'] ); ?></h2>
-					<p><code><?php echo esc_html( $definition['path'] ); ?></code> · <?php echo esc_html( $definition['format'] ); ?></p>
+					<p class="adrian-stf-meta"><code><?php echo esc_html( $definition['path'] ); ?></code> · <?php echo esc_html( $definition['format'] ); ?></p>
 					<p><?php echo esc_html( $definition['description'] ); ?></p>
 					<?php if ( isset( $validation['results'][ $key ] ) ) : ?>
-						<p><strong>Status:</strong> <?php echo esc_html( $validation['results'][ $key ]['status'] ); ?> – <?php echo esc_html( $validation['results'][ $key ]['message'] ); ?></p>
+						<p class="adrian-stf-status adrian-stf-status-<?php echo esc_attr( sanitize_html_class( $validation['results'][ $key ]['status'] ) ); ?>"><strong>Status:</strong> <?php echo esc_html( $validation['results'][ $key ]['status'] ); ?> – <?php echo esc_html( $validation['results'][ $key ]['message'] ); ?></p>
 					<?php endif; ?>
 					<p>
 						<label>
@@ -926,33 +1065,33 @@ function adrian_site_text_files_render_admin_page() {
 							· <a href="<?php echo esc_url( home_url( ltrim( $definition['path'], '/' ) ) ); ?>" target="_blank" rel="noopener noreferrer">Endpunkt öffnen</a>
 						<?php endif; ?>
 					</p>
-					<textarea name="files[<?php echo esc_attr( $key ); ?>][content]" rows="12" style="width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;" spellcheck="false"><?php echo esc_textarea( $file['content'] ); ?></textarea>
-				</section>
+						<textarea class="adrian-stf-code" name="files[<?php echo esc_attr( $key ); ?>][content]" rows="12" spellcheck="false"><?php echo esc_textarea( $file['content'] ); ?></textarea>
+					</section>
 			<?php endforeach; ?>
-			<section style="max-width: 960px; margin: 1.5rem 0; padding: 1rem 1.25rem; border: 1px solid #ccd0d4; background: #fff;">
+			<section class="adrian-stf-card">
 				<h2 style="margin-top: 0;">LLMs-full automatisch erzeugen</h2>
 				<p>Der Langkontext wird nur aus bereits veröffentlichten Inhalten gebaut und nach Änderungen automatisch neu erzeugt. Entwürfe, Papierkorb und Medien werden nicht einbezogen.</p>
-				<p><label><input type="checkbox" name="generated[include_posts]" value="1" <?php checked( $options['generated']['include_posts'] ); ?>> Beiträge einbeziehen</label></p>
+					<p><label><input type="checkbox" name="generated[include_posts]" value="1" <?php checked( $options['generated']['include_posts'] ); ?>> Beiträge einbeziehen</label></p>
 				<p><label><input type="checkbox" name="generated[include_pages]" value="1" <?php checked( $options['generated']['include_pages'] ); ?>> Seiten einbeziehen (einschließlich rechtlicher Seiten nur nach deiner ausdrücklichen Auswahl)</label></p>
 				<p><label>Maximale Anzahl Inhalte <input type="number" min="1" max="100" name="generated[max_items]" value="<?php echo esc_attr( $options['generated']['max_items'] ); ?>"></label>
 				<label style="margin-left: 1rem;">Maximale Zeichen <input type="number" min="10000" max="250000" step="1000" name="generated[max_chars]" value="<?php echo esc_attr( $options['generated']['max_chars'] ); ?>"></label></p>
 			</section>
-			<section style="max-width: 960px; margin: 1.5rem 0; padding: 1rem 1.25rem; border: 1px solid #ccd0d4; background: #fff;">
+			<section class="adrian-stf-card">
 				<h2 style="margin-top: 0;">robots.txt erweitern</h2>
 				<p>Die WordPress-Core-Ausgabe wird nicht ersetzt. Eingetragene Zeilen werden nur angehängt. Die Sitemap wird von WordPress bereits automatisch ergänzt.</p>
 				<p><label><input type="checkbox" name="robots[enabled]" value="1" <?php checked( $options['robots']['enabled'] ); ?>> Erweiterung veröffentlichen</label></p>
-				<textarea name="robots[lines]" rows="6" style="width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;" spellcheck="false"><?php echo esc_textarea( $options['robots']['lines'] ); ?></textarea>
+				<textarea class="adrian-stf-code" name="robots[lines]" rows="6" spellcheck="false"><?php echo esc_textarea( $options['robots']['lines'] ); ?></textarea>
 			</section>
 			<?php submit_button( 'Textdateien speichern' ); ?>
 		</form>
 
-		<section style="max-width: 960px; margin: 1.5rem 0; padding: 1rem 1.25rem; border: 1px solid #ccd0d4; background: #fff;">
+		<section class="adrian-stf-card">
 			<h2 style="margin-top: 0;">Konfiguration importieren</h2>
 			<p>Importe ändern niemals den gesperrten Benutzer. Ungültiges JSON oder ungültige strukturierte Dateien werden vollständig abgewiesen.</p>
 			<form method="post">
 				<?php wp_nonce_field( 'adrian_site_text_files_import' ); ?>
 				<input type="hidden" name="adrian_site_text_files_action" value="import">
-				<textarea name="import_json" rows="8" style="width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;" placeholder="Hier einen Export einfügen …" spellcheck="false"></textarea>
+				<textarea class="adrian-stf-code" name="import_json" rows="8" placeholder="Hier einen Export einfügen …" spellcheck="false"></textarea>
 				<?php submit_button( 'Konfiguration importieren', 'secondary', 'submit', false ); ?>
 			</form>
 		</section>
