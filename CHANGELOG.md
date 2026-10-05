@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.0
+
+- Öffentliche Standarddateien senden ETags und beantworten unveränderte Wiederholungsanfragen mit `304 Not Modified`.
+- `security.txt` erhält ein tagesstabiles Ablaufdatum, damit Browser und Caches nicht bei jeder Sekunde einen neuen Validator sehen.
+- Die kurze öffentliche Cache-Dauer erlaubt jetzt eine schonende Hintergrundaktualisierung über `stale-while-revalidate`.
+
 ## 1.3.3
 
 - Öffentliche Textdatei-Endpunkte senden keine widersprüchlichen No-Cache-Header mehr und können die vorgesehene kurze öffentliche Cache-Dauer nutzen.
