@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.1.4
+ * Version: 1.2.0
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.1.4';
+	private const VERSION      = '1.2.0';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
@@ -481,6 +481,11 @@ PHP;
 		$gzip_file = $file . '.gz';
 		$use_gzip  = is_readable( $gzip_file ) && false !== stripos( (string) ( $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '' ), 'gzip' );
 		$body      = $use_gzip ? $gzip_file : $file;
+		$not_modified = $this->send_cached_file_headers( $body, $use_gzip );
+		if ( $not_modified ) {
+			exit;
+		}
+
 		if ( ! headers_sent() ) {
 			header( 'X-Adrian-Site-Cache: HIT' );
 			header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
@@ -496,6 +501,57 @@ PHP;
 			readfile( $body );
 		}
 		exit;
+	}
+
+	/**
+	 * Send validators for a cached representation and handle conditional GETs.
+	 *
+	 * @param string $body Cached representation on disk.
+	 * @param bool   $gzip Whether the representation is compressed.
+	 * @return bool Whether the request was answered with 304.
+	 */
+	private function send_cached_file_headers( string $body, bool $gzip ): bool {
+		$mtime = is_file( $body ) ? (int) filemtime( $body ) : 0;
+		$size  = is_file( $body ) ? (int) filesize( $body ) : 0;
+		if ( $mtime < 1 || $size < 0 || headers_sent() ) {
+			return false;
+		}
+
+		$etag = 'W/"' . $mtime . '-' . $size . ( $gzip ? '-gzip' : '' ) . '"';
+		header( 'X-Adrian-Site-Cache: HIT' );
+		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
+		header( 'Cache-Control: public, max-age=60, stale-while-revalidate=30' );
+		if ( $gzip ) {
+			header( 'Content-Encoding: gzip' );
+			header( 'Vary: Accept-Encoding' );
+		}
+		header( 'ETag: ' . $etag );
+		header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s \\G\\M\\T', $mtime ) );
+
+		$if_none_match = trim( (string) ( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' ) );
+		$etag_matches  = false;
+		if ( '' !== $if_none_match ) {
+			$normalized_etag = preg_replace( '/^W\\//', '', $etag );
+			foreach ( explode( ',', $if_none_match ) as $candidate ) {
+				$candidate = trim( $candidate );
+				$candidate = preg_replace( '/^W\\//', '', $candidate );
+				if ( '*' === $candidate || ( is_string( $normalized_etag ) && $candidate === $normalized_etag ) ) {
+					$etag_matches = true;
+					break;
+				}
+			}
+		} elseif ( ! empty( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) {
+			$since = strtotime( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] );
+			$etag_matches = false !== $since && $since >= $mtime;
+		}
+
+		if ( $etag_matches ) {
+			status_header( 304 );
+			header( 'Content-Length: 0' );
+			return true;
+		}
+
+		return false;
 	}
 
 	public function purge_after_post_change( int $post_id, WP_Post $post, bool $update ): void {
