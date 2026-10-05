@@ -2,7 +2,7 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.1.2
+Aktuelle Version: 1.1.4
 
 ## Konzept
 
@@ -27,6 +27,7 @@ Optional enthält das Plugin einen eigenen Datei-Cache als vollständige Ablösu
 - keine externen Schriftarten, JavaScript-Bibliotheken oder Tracking-Funktionen.
 - Die Statusanzeige zählt nur echte HTML-Cache-Einträge und berücksichtigt deren GZIP-Varianten.
 - Der normale Datei-Cache liefert vorhandene GZIP-Varianten direkt aus, wenn der Browser sie unterstützt.
+- Manuelle Leerungen entfernen zusätzlich verwaiste GZIP-Neben- und alte temporäre Dateien.
 
 ## Betrieb
 
