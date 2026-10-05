@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Website-Textdateien für Adrian Dylan Wulf
  * Description: Verwaltet maschinenlesbare Website-Standards wie security.txt, robots.txt-Erweiterungen, LLM-Kontext und Webmetadaten.
- * Version: 1.3.3
+ * Version: 1.4.0
  * Author: Adrian Dylan Wulf
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.3.3' );
+define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.4.0' );
 define( 'ADRIAN_SITE_TEXT_FILES_OPTION', 'adrian_site_text_files_options' );
 define( 'ADRIAN_SITE_TEXT_FILES_QUERY_VAR', 'adrian_site_text_file' );
 
@@ -698,11 +698,12 @@ register_deactivation_hook( __FILE__, 'adrian_site_text_files_deactivation' );
  */
 function adrian_site_text_files_render( $content ) {
 	$site_url = untrailingslashit( home_url( '/' ) );
+	$security_expiry = strtotime( gmdate( 'Y-m-d', time() + YEAR_IN_SECONDS ) . ' 00:00:00 UTC' );
 	$tokens   = array(
 		'{site_url}'         => $site_url,
 		'{site_name}'        => get_bloginfo( 'name' ),
 		'{year}'             => wp_date( 'Y' ),
-		'{security_expires}' => gmdate( 'Y-m-d\\TH:i:s\\Z', time() + YEAR_IN_SECONDS ),
+		'{security_expires}' => gmdate( 'Y-m-d\\TH:i:s\\Z', false !== $security_expiry ? $security_expiry : time() + YEAR_IN_SECONDS ),
 	);
 
 	if ( false !== strpos( (string) $content, '{llms_full}' ) ) {
@@ -768,6 +769,29 @@ function adrian_site_text_files_query_vars( $vars ) {
 add_filter( 'query_vars', 'adrian_site_text_files_query_vars' );
 
 /**
+ * Check whether a public endpoint can answer a conditional request.
+ *
+ * @param string $etag Current representation tag.
+ * @return bool
+ */
+function adrian_site_text_files_etag_matches( $etag ) {
+	$header = trim( isset( $_SERVER['HTTP_IF_NONE_MATCH'] ) ? (string) $_SERVER['HTTP_IF_NONE_MATCH'] : '' );
+	if ( '' === $header ) {
+		return false;
+	}
+
+	$current = preg_replace( '/^W\\//', '', (string) $etag );
+	foreach ( explode( ',', $header ) as $candidate ) {
+		$candidate = preg_replace( '/^W\\//', '', trim( $candidate ) );
+		if ( '*' === $candidate || ( is_string( $current ) && $candidate === $current ) ) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
  * Serve enabled virtual files before normal WordPress template output.
  *
  * @return void
@@ -791,7 +815,7 @@ function adrian_site_text_files_serve_endpoint() {
 
 	header( 'Content-Type: ' . $definitions[ $key ]['mime'] );
 	header( 'X-Content-Type-Options: nosniff' );
-	header( 'Cache-Control: public, max-age=300, must-revalidate' );
+	header( 'Cache-Control: public, max-age=300, stale-while-revalidate=60' );
 	$content = adrian_site_text_files_render( $options['files'][ $key ]['content'] );
 
 	// Site name and URL tokens can change after an admin save. Fail closed
@@ -803,6 +827,15 @@ function adrian_site_text_files_serve_endpoint() {
 			header( 'Cache-Control: no-store' );
 			exit;
 		}
+	}
+
+	$etag = '"' . md5( $content ) . '"';
+	header( 'ETag: ' . $etag );
+	header( 'Content-Length: ' . (string) strlen( $content ) );
+	if ( adrian_site_text_files_etag_matches( $etag ) ) {
+		status_header( 304 );
+		header( 'Content-Length: 0' );
+		exit;
 	}
 
 	if ( 'HEAD' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? (string) $_SERVER['REQUEST_METHOD'] : 'GET' ) ) {
