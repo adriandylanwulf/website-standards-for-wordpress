@@ -41,7 +41,7 @@ $adrian_site_cache_early   = false;
 if ( is_readable( $adrian_site_cache_config ) ) {
 	$adrian_site_cache_values = require $adrian_site_cache_config;
 	if ( is_array( $adrian_site_cache_values ) ) {
-		if ( '1.1.2' !== (string) ( $adrian_site_cache_values['version'] ?? '' ) || 'native' !== (string) ( $adrian_site_cache_values['engine'] ?? '' ) || ! empty( $adrian_site_cache_values['multisite'] ) ) {
+			if ( '1.1.4' !== (string) ( $adrian_site_cache_values['version'] ?? '' ) || 'native' !== (string) ( $adrian_site_cache_values['engine'] ?? '' ) || ! empty( $adrian_site_cache_values['multisite'] ) ) {
 			return;
 		}
 		$adrian_site_cache_ttl     = max( 60, (int) ( $adrian_site_cache_values['ttl'] ?? 900 ) );
