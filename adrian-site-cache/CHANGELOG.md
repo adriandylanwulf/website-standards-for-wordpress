@@ -2,11 +2,13 @@
 
 ## 1.2.0
 
-- Manuelle Cache-Leerungen entfernen jetzt ebenfalls verwaiste GZIP-Neben- und alte temporäre Dateien.
 - Wiederholte Anfragen an unveränderte Cache-Dateien nutzen ETag- und Last-Modified-Validatoren und liefern bei einem Treffer `304 Not Modified`.
-- Die interne Versionssperre des optionalen Drop-ins wurde für das Update erhöht.
+- Die öffentliche Cache-Auslieferung setzt die zugehörigen Validator- und Cache-Header auch bei einer `304`-Antwort vollständig.
 
 ## 1.1.4
+
+- Manuelle Cache-Leerungen entfernen jetzt ebenfalls verwaiste GZIP-Neben- und alte temporäre Dateien.
+- Die interne Versionssperre des optionalen Drop-ins wurde für das Update erhöht.
 
 ## 1.1.3
 
