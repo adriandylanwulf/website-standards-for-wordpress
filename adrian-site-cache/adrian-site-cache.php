@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.1.2
+ * Version: 1.1.4
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.1.2';
+	private const VERSION      = '1.1.4';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
@@ -558,6 +558,7 @@ PHP;
 			return;
 		}
 
+		$this->remove_stale_cache_artifacts();
 		$options = $this->options();
 		$files   = $this->native_files();
 		if ( empty( $files ) ) {
@@ -588,6 +589,47 @@ PHP;
 		}
 	}
 
+	/**
+	 * Remove only stale temporary files and orphaned gzip sidecars created by
+	 * this plugin. A failed request or interrupted deploy must not leave
+	 * unbounded debris in the cache directory, but active files are left alone.
+	 *
+	 * @return void
+	 */
+	private function remove_stale_cache_artifacts(): void {
+		$dir = $this->native_cache_dir();
+		if ( ! is_dir( $dir ) ) {
+			return;
+		}
+
+		$now = time();
+		foreach ( new DirectoryIterator( $dir ) as $item ) {
+			if ( $item->isDot() || ! $item->isFile() ) {
+				continue;
+			}
+
+			$filename = $item->getFilename();
+			$path     = $item->getPathname();
+			$age      = $now - $item->getMTime();
+
+			// Atomic writes use UUID-suffixed .tmp files. Only remove old
+			// leftovers, never a file that could belong to an active request.
+			if ( $age > HOUR_IN_SECONDS && str_ends_with( $filename, '.tmp' ) ) {
+				@unlink( $path );
+				continue;
+			}
+
+			if ( ! preg_match( '/^[a-f0-9]{64}\.html\.gz$/i', $filename ) ) {
+				continue;
+			}
+
+			$html_file = substr( $path, 0, -3 );
+			if ( ! is_file( $html_file ) ) {
+				@unlink( $path );
+			}
+		}
+	}
+
 	private function delete_native_cache_files(): void {
 		$dir = $this->native_cache_dir();
 		if ( ! is_dir( $dir ) ) {
@@ -601,6 +643,9 @@ PHP;
 				@unlink( $item->getPathname() . '.gz' );
 			}
 		}
+
+		// Manual purges should remove the same stale sidecars as the scheduled GC.
+		$this->remove_stale_cache_artifacts();
 	}
 
 	private function cache_stats(): array {
