@@ -41,7 +41,7 @@ $adrian_site_cache_early   = false;
 if ( is_readable( $adrian_site_cache_config ) ) {
 	$adrian_site_cache_values = require $adrian_site_cache_config;
 	if ( is_array( $adrian_site_cache_values ) ) {
-			if ( '1.1.4' !== (string) ( $adrian_site_cache_values['version'] ?? '' ) || 'native' !== (string) ( $adrian_site_cache_values['engine'] ?? '' ) || ! empty( $adrian_site_cache_values['multisite'] ) ) {
+			if ( '1.2.0' !== (string) ( $adrian_site_cache_values['version'] ?? '' ) || 'native' !== (string) ( $adrian_site_cache_values['engine'] ?? '' ) || ! empty( $adrian_site_cache_values['multisite'] ) ) {
 			return;
 		}
 		$adrian_site_cache_ttl     = max( 60, (int) ( $adrian_site_cache_values['ttl'] ?? 900 ) );
@@ -75,6 +75,41 @@ if ( ! $adrian_site_cache_enabled || '' === $adrian_site_cache_file || ! is_read
 $adrian_site_cache_gzip = $adrian_site_cache_file . '.gz';
 $adrian_site_cache_use_gzip = is_readable( $adrian_site_cache_gzip ) && false !== stripos( (string) ( $_SERVER['HTTP_ACCEPT_ENCODING'] ?? '' ), 'gzip' );
 $adrian_site_cache_body = $adrian_site_cache_use_gzip ? $adrian_site_cache_gzip : $adrian_site_cache_file;
+$adrian_site_cache_mtime = is_file( $adrian_site_cache_body ) ? (int) filemtime( $adrian_site_cache_body ) : 0;
+$adrian_site_cache_size  = is_file( $adrian_site_cache_body ) ? (int) filesize( $adrian_site_cache_body ) : 0;
+
+if ( $adrian_site_cache_mtime > 0 && $adrian_site_cache_size >= 0 && ! headers_sent() ) {
+	$adrian_site_cache_etag = 'W/"' . $adrian_site_cache_mtime . '-' . $adrian_site_cache_size . ( $adrian_site_cache_use_gzip ? '-gzip' : '' ) . '"';
+	header( 'X-Adrian-Site-Cache: HIT' );
+	header( 'Content-Type: text/html; charset=UTF-8' );
+	header( 'Cache-Control: public, max-age=60, stale-while-revalidate=30' );
+	if ( $adrian_site_cache_use_gzip ) {
+		header( 'Content-Encoding: gzip' );
+		header( 'Vary: Accept-Encoding' );
+	}
+	header( 'ETag: ' . $adrian_site_cache_etag );
+	header( 'Last-Modified: ' . gmdate( 'D, d M Y H:i:s \\G\\M\\T', $adrian_site_cache_mtime ) );
+	$adrian_site_cache_if_none_match = trim( (string) ( $_SERVER['HTTP_IF_NONE_MATCH'] ?? '' ) );
+	$adrian_site_cache_not_modified = false;
+	if ( '' !== $adrian_site_cache_if_none_match ) {
+		$adrian_site_cache_normalized_etag = preg_replace( '/^W\\//', '', $adrian_site_cache_etag );
+		foreach ( explode( ',', $adrian_site_cache_if_none_match ) as $adrian_site_cache_candidate ) {
+			$adrian_site_cache_candidate = preg_replace( '/^W\\//', '', trim( $adrian_site_cache_candidate ) );
+			if ( '*' === $adrian_site_cache_candidate || ( is_string( $adrian_site_cache_normalized_etag ) && $adrian_site_cache_candidate === $adrian_site_cache_normalized_etag ) ) {
+				$adrian_site_cache_not_modified = true;
+				break;
+			}
+		}
+	} elseif ( ! empty( $_SERVER['HTTP_IF_MODIFIED_SINCE'] ) ) {
+		$adrian_site_cache_since = strtotime( (string) $_SERVER['HTTP_IF_MODIFIED_SINCE'] );
+		$adrian_site_cache_not_modified = false !== $adrian_site_cache_since && $adrian_site_cache_since >= $adrian_site_cache_mtime;
+	}
+	if ( $adrian_site_cache_not_modified ) {
+		http_response_code( 304 );
+		header( 'Content-Length: 0' );
+	exit;
+	}
+}
 
 if ( ! headers_sent() ) {
 	header( 'X-Adrian-Site-Cache: HIT' );
