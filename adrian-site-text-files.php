@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Website-Textdateien für Adrian Dylan Wulf
  * Description: Verwaltet maschinenlesbare Website-Standards wie security.txt, robots.txt-Erweiterungen, LLM-Kontext und Webmetadaten.
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author: Adrian Dylan Wulf
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.3.2' );
+define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.3.3' );
 define( 'ADRIAN_SITE_TEXT_FILES_OPTION', 'adrian_site_text_files_options' );
 define( 'ADRIAN_SITE_TEXT_FILES_QUERY_VAR', 'adrian_site_text_file' );
 
@@ -458,7 +458,7 @@ function adrian_site_text_files_ai_source() {
 	);
 
 	$parts       = array( 'Website: ' . get_bloginfo( 'name' ), 'URL: ' . untrailingslashit( home_url( '/' ) ), 'Sprache: Deutsch', '', 'Öffentliche Inhalte:' );
-	$used_chars  = strlen( implode( "\\n", $parts ) );
+	$used_chars  = strlen( implode( "\n", $parts ) );
 	$excluded_slugs = array( 'impressum', 'datenschutz', 'privacy-policy', 'privacy', 'kontakt', 'kontaktformular' );
 
 	foreach ( $items as $item ) {
@@ -471,8 +471,8 @@ function adrian_site_text_files_ai_source() {
 		$url   = esc_url_raw( get_permalink( $item ) );
 		$body  = strip_shortcodes( (string) $item->post_content );
 		$body  = wp_strip_all_tags( $body );
-		$body  = preg_replace( "/[ \\t]+\\n/", "\\n", $body );
-		$body  = preg_replace( "/\\n{3,}/", "\\n\\n", $body );
+	$body  = preg_replace( "/[ \t]+\n/", "\n", $body );
+	$body  = preg_replace( "/\n{3,}/", "\n\n", $body );
 		$body  = trim( adrian_site_text_files_ai_redact_text( is_string( $body ) ? $body : '' ) );
 		if ( function_exists( 'mb_substr' ) ) {
 			$body = mb_substr( $body, 0, 7000 );
@@ -480,7 +480,7 @@ function adrian_site_text_files_ai_source() {
 			$body = substr( $body, 0, 7000 );
 		}
 
-		$entry = "\\n\\n### {$title}\\nURL: {$url}\\n{$body}";
+	$entry = "\n\n### {$title}\nURL: {$url}\n{$body}";
 		if ( $used_chars + strlen( $entry ) > $max_chars ) {
 			break;
 		}
@@ -489,7 +489,7 @@ function adrian_site_text_files_ai_source() {
 		$used_chars += strlen( $entry );
 	}
 
-	return trim( implode( "\\n", $parts ) );
+	return trim( implode( "\n", $parts ) );
 }
 
 /**
@@ -517,7 +517,7 @@ function adrian_site_text_files_validate_ai_output( $content ) {
 	if ( preg_match_all( '/https?:\\/\\/[^\\s)]+/i', $content, $matches ) ) {
 		foreach ( $matches[0] as $url ) {
 			$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
-			if ( '' !== $host && $host !== $site_host && ( '' === $site_host || 0 !== substr_compare( $host, '.' . $site_host, -strlen( '.' . $site_host ) ) ) ) {
+			if ( '' !== $host && $host !== $site_host ) {
 				return new WP_Error( 'ai_output_external_link', 'Die KI-Ausgabe enthält einen nicht erlaubten externen Link.' );
 			}
 		}
@@ -570,6 +570,9 @@ function adrian_site_text_files_ai_generate_text( $prompt, $provider, $free_tier
  */
 function adrian_site_text_files_ai_refresh( $automatic = false ) {
 	$options = adrian_site_text_files_options();
+	if ( ! $automatic && ! adrian_site_text_files_can_manage() ) {
+		return new WP_Error( 'ai_forbidden', 'Diese KI-Funktion ist nur für den freigegebenen Administrator verfügbar.' );
+	}
 	if ( $automatic && empty( $options['ai']['enabled'] ) ) {
 		return new WP_Error( 'ai_disabled', 'Die automatische KI-Aktualisierung ist deaktiviert.' );
 	}
@@ -786,7 +789,6 @@ function adrian_site_text_files_serve_endpoint() {
 		exit;
 	}
 
-	nocache_headers();
 	header( 'Content-Type: ' . $definitions[ $key ]['mime'] );
 	header( 'X-Content-Type-Options: nosniff' );
 	header( 'Cache-Control: public, max-age=300, must-revalidate' );
@@ -1265,6 +1267,8 @@ function adrian_site_text_files_save_admin_form() {
 		);
 	}
 
+	check_admin_referer( 'adrian_site_text_files_save' );
+
 	$options  = adrian_site_text_files_options();
 	$generated = $options['generated'];
 	if ( isset( $_POST['generated'] ) && is_array( $_POST['generated'] ) ) {
@@ -1281,8 +1285,6 @@ function adrian_site_text_files_save_admin_form() {
 		$robots['enabled'] = ! empty( $submitted_robots['enabled'] );
 		$robots['lines']   = adrian_site_text_files_sanitize_template( $submitted_robots['lines'] ?? '' );
 	}
-
-	check_admin_referer( 'adrian_site_text_files_save' );
 
 	$definitions = adrian_site_text_files_definitions();
 	$submitted   = isset( $_POST['files'] ) && is_array( $_POST['files'] ) ? $_POST['files'] : array();
