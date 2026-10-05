@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.4
+
+- Manuelle Cache-Leerungen entfernen jetzt ebenfalls verwaiste GZIP-Neben- und alte temporäre Dateien.
+- Die interne Versionssperre des optionalen Drop-ins wurde für das Update erhöht.
+
+## 1.1.3
+
+- Entfernt verwaiste gzip-Neben- und alte temporäre Dateien im eigenen Cache-Verzeichnis.
+- Erhöht die interne Versionssperre des optionalen Drop-ins, damit kein Cache aus einer älteren Implementierung früh ausgeliefert wird.
+
 ## 1.1.2
 
 - Administrationsoberfläche weiter beruhigt: weniger Kartenwirkung, flachere Statuszeilen und kompaktere Cache-Modus-Details.
