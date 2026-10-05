@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.3.3
+
+- Öffentliche Textdatei-Endpunkte senden keine widersprüchlichen No-Cache-Header mehr und können die vorgesehene kurze öffentliche Cache-Dauer nutzen.
+- Die manuelle KI-Aktualisierung prüft die geschützte Administrationsberechtigung jetzt zusätzlich direkt in der Kernfunktion.
+- KI-Quelltexte verwenden echte Zeilenumbrüche; dadurch bleibt der begrenzte Kontext für den Connector lesbar und korrekt.
+- KI-Ausgaben dürfen nur noch exakt auf die konfigurierte Website-Hostadresse verweisen; Subdomains werden nicht stillschweigend zugelassen.
+- CSRF-Prüfungen erfolgen vor der Verarbeitung gespeicherter Admin-Eingaben.
+
 ## 1.3.2
 
 - Persistente Datenfreigabe als zusätzliche Fail-closed-Sperre ergänzt.
