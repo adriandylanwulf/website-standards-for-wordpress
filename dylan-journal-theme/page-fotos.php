@@ -18,12 +18,12 @@ $photo_items = get_children(
 	)
 );
 ?>
-<div class="dj-photos-page">
+<section class="dj-photos-page" aria-labelledby="photos-title">
 	<div class="dj-width">
 		<header class="dj-photos-intro">
 			<div>
 				<p class="dj-eyebrow"><?php esc_html_e( 'Fotos', 'dylan-journal' ); ?></p>
-				<h1><?php esc_html_e( 'Unterwegs festgehalten', 'dylan-journal' ); ?></h1>
+				<h1 id="photos-title"><?php esc_html_e( 'Unterwegs festgehalten', 'dylan-journal' ); ?></h1>
 			</div>
 			<p><?php esc_html_e( 'Bilder von unterwegs, aus Städten und von kleinen Wegen, die mir im Kopf geblieben sind. Ich lasse die Motive möglichst für sich sprechen – ohne Filtershow und ohne große Erklärung.', 'dylan-journal' ); ?></p>
 		</header>
@@ -58,5 +58,5 @@ $photo_items = get_children(
 			<p class="dj-photo-empty"><?php esc_html_e( 'Die ersten Bilder kommen bald dazu.', 'dylan-journal' ); ?></p>
 		<?php endif; ?>
 	</div>
-</div>
+</section>
 <?php get_footer(); ?>
