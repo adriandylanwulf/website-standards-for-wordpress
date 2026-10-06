@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Website-Textdateien für Adrian Dylan Wulf
  * Description: Verwaltet maschinenlesbare Website-Standards wie security.txt, robots.txt-Erweiterungen, LLM-Kontext und Webmetadaten.
- * Version: 1.5.0
+ * Version: 1.6.0
  * Author: Adrian Dylan Wulf
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.5.0' );
+define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.6.0' );
 define( 'ADRIAN_SITE_TEXT_FILES_OPTION', 'adrian_site_text_files_options' );
 define( 'ADRIAN_SITE_TEXT_FILES_QUERY_VAR', 'adrian_site_text_file' );
 
@@ -101,6 +101,15 @@ function adrian_site_text_files_definitions() {
 			'enabled'     => false,
 			'default'     => "{\n  \"status\": \"experimental\",\n  \"site\": \"{site_url}\",\n  \"training\": \"not-specified\"\n}\n",
 		),
+		'ai_safety' => array(
+			'label'       => 'AI-Safety.txt',
+			'path'        => '/.well-known/ai-safety.txt',
+			'mime'        => 'text/plain; charset=utf-8',
+			'format'      => 'experimenteller Text',
+			'description' => 'Experimenteller IETF-Entwurf zu KI-Sicherheitsangaben; standardmäßig deaktiviert und nicht als etablierter Standard zu verstehen.',
+			'enabled'     => false,
+			'default'     => "# Experimenteller Entwurf – derzeit nicht aktiviert.\n# Keine Aussage über die tatsächliche Sicherheit automatisierter Systeme.\n",
+		),
 		'ads' => array(
 			'label'       => 'ads.txt',
 			'path'        => '/ads.txt',
@@ -175,6 +184,9 @@ function adrian_site_text_files_default_options() {
 			'last_message'   => '',
 			'last_hash'      => '',
 			'draft'          => '',
+			'generator_key'  => '',
+			'generator_draft' => '',
+			'generator_last_run' => 0,
 		),
 	);
 }
@@ -229,6 +241,9 @@ function adrian_site_text_files_options() {
 		'last_message'    => isset( $saved_ai['last_message'] ) && is_string( $saved_ai['last_message'] ) ? sanitize_text_field( $saved_ai['last_message'] ) : '',
 		'last_hash'       => isset( $saved_ai['last_hash'] ) && is_string( $saved_ai['last_hash'] ) ? sanitize_key( $saved_ai['last_hash'] ) : '',
 		'draft'           => isset( $saved_ai['draft'] ) && is_string( $saved_ai['draft'] ) ? adrian_site_text_files_sanitize_template( $saved_ai['draft'] ) : '',
+		'generator_key'   => isset( $saved_ai['generator_key'] ) && is_string( $saved_ai['generator_key'] ) ? sanitize_key( $saved_ai['generator_key'] ) : '',
+		'generator_draft' => isset( $saved_ai['generator_draft'] ) && is_string( $saved_ai['generator_draft'] ) ? adrian_site_text_files_sanitize_template( $saved_ai['generator_draft'] ) : '',
+		'generator_last_run' => isset( $saved_ai['generator_last_run'] ) ? absint( $saved_ai['generator_last_run'] ) : 0,
 	);
 
 	foreach ( $defaults['files'] as $key => $default_file ) {
@@ -519,6 +534,66 @@ function adrian_site_text_files_validate_ai_output( $content ) {
 			$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
 			if ( '' !== $host && $host !== $site_host ) {
 				return new WP_Error( 'ai_output_external_link', 'Die KI-Ausgabe enthält einen nicht erlaubten externen Link.' );
+			}
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Return files for which an AI proposal is useful and safe enough to review.
+ * Security contacts and advertising seller lists remain owner-managed because
+ * an AI model must not invent disclosure addresses or seller identities.
+ *
+ * @return array<string, array<string, mixed>>
+ */
+function adrian_site_text_files_ai_generator_definitions() {
+	$definitions = adrian_site_text_files_definitions();
+	$allowed     = array( 'llms', 'humans', 'manifest', 'tdmrep', 'ai', 'ai_json', 'ai_safety', 'opensearch' );
+
+	return array_intersect_key( $definitions, array_flip( $allowed ) );
+}
+
+/**
+ * Validate a proposal for one supported machine-readable file.
+ *
+ * @param string $key     File key.
+ * @param string $content Candidate content.
+ * @return true|WP_Error
+ */
+function adrian_site_text_files_validate_ai_file_output( $key, $content ) {
+	$definitions = adrian_site_text_files_ai_generator_definitions();
+	$content     = trim( (string) $content );
+
+	if ( ! isset( $definitions[ $key ] ) ) {
+		return new WP_Error( 'ai_file_not_allowed', 'Für diese Datei ist kein KI-Generator freigeschaltet.' );
+	}
+	if ( '' === $content || strlen( $content ) > 20000 ) {
+		return new WP_Error( 'ai_file_size_invalid', 'Die KI-Ausgabe ist leer oder überschreitet die Dateigrenze.' );
+	}
+	if ( false !== stripos( $content, '<script' ) || false !== stripos( $content, 'javascript:' ) || false !== stripos( $content, '<iframe' ) ) {
+		return new WP_Error( 'ai_file_active_content', 'Die KI-Ausgabe enthält nicht erlaubte aktive Inhalte.' );
+	}
+
+	$validation = adrian_site_text_files_validate_content( $key, $content );
+	if ( is_wp_error( $validation ) ) {
+		return $validation;
+	}
+	if ( 'llms' === $key ) {
+		$validation = adrian_site_text_files_validate_ai_output( $content );
+		if ( is_wp_error( $validation ) ) {
+			return $validation;
+		}
+	}
+
+	$site_host = strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+	$allowed_hosts = array( $site_host, 'a9.com', 'www.a9.com' );
+	if ( preg_match_all( '/https?:\/\/[^\s)"<>]+/i', $content, $matches ) ) {
+		foreach ( $matches[0] as $url ) {
+			$host = strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) );
+			if ( '' !== $host && ! in_array( $host, $allowed_hosts, true ) ) {
+				return new WP_Error( 'ai_file_external_link', 'Die KI-Ausgabe enthält einen nicht erlaubten externen Link.' );
 			}
 		}
 	}
@@ -1180,7 +1255,10 @@ function adrian_site_text_files_ai_save_admin_form() {
 	$options['ai']['enabled']         = $enabled;
 	$options['ai']['provider']        = $provider;
 	$options['ai']['free_tier']       = $free_tier;
-	$options['ai']['data_consent']    = ( $enabled || $auto_publish ) ? $confirmed : false;
+	// A one-off, manually reviewed file proposal also needs an explicit
+	// consent. Keeping this separate from the hourly switch lets the owner use
+	// the generator without enabling scheduled outbound requests.
+	$options['ai']['data_consent']    = $confirmed;
 	$options['ai']['auto_publish']    = $auto_publish;
 	$options['ai']['max_input_chars'] = $max_input;
 	update_option( ADRIAN_SITE_TEXT_FILES_OPTION, $options, false );
@@ -1225,6 +1303,120 @@ function adrian_site_text_files_ai_run_admin_form() {
 	}
 
 	$options = adrian_site_text_files_options();
+	return array( 'type' => 'updated', 'message' => $options['ai']['last_message'] );
+}
+
+/**
+ * Generate a reviewable proposal for one supported file with the configured
+ * WordPress AI connector. The proposal never publishes automatically.
+ *
+ * @return array{type:string,message:string}|null
+ */
+function adrian_site_text_files_ai_generate_file_admin_form() {
+	if ( 'POST' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? (string) $_SERVER['REQUEST_METHOD'] : '' ) ) {
+		return null;
+	}
+
+	$action = isset( $_POST['adrian_site_text_files_action'] ) && is_string( $_POST['adrian_site_text_files_action'] ) ? sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) : '';
+	if ( 'ai_generate_file' !== $action ) {
+		return null;
+	}
+
+	if ( ! adrian_site_text_files_can_manage() ) {
+		return array( 'type' => 'error', 'message' => 'Zugriff verweigert.' );
+	}
+
+	check_admin_referer( 'adrian_site_text_files_ai_generate_file' );
+	$options     = adrian_site_text_files_options();
+	$key         = isset( $_POST['ai_file_key'] ) && is_string( $_POST['ai_file_key'] ) ? sanitize_key( wp_unslash( $_POST['ai_file_key'] ) ) : '';
+	$definitions = adrian_site_text_files_ai_generator_definitions();
+	if ( ! isset( $definitions[ $key ], $options['files'][ $key ] ) ) {
+		return array( 'type' => 'error', 'message' => 'Für diese Datei ist kein KI-Generator freigeschaltet.' );
+	}
+	if ( empty( $options['ai']['data_consent'] ) ) {
+		return array( 'type' => 'error', 'message' => 'Bitte bestätige zuerst die Datenfreigabe für den KI-Connector in den KI-Einstellungen.' );
+	}
+	if ( ! adrian_site_text_files_ai_api_available() ) {
+		return array( 'type' => 'error', 'message' => 'Die offizielle WordPress-AI-Schnittstelle ist nicht verfügbar.' );
+	}
+
+	$allowed = adrian_site_text_files_allow_ai_request( 'generate_file', get_current_user_id() );
+	if ( is_wp_error( $allowed ) ) {
+		return array( 'type' => 'error', 'message' => $allowed->get_error_message() );
+	}
+
+	$definition = $definitions[ $key ];
+	$source     = adrian_site_text_files_ai_source();
+	$template   = adrian_site_text_files_ai_redact_text( (string) $options['files'][ $key ]['content'] );
+	$prompt     = "Erstelle einen überprüfbaren Vorschlag für die maschinenlesbare Datei {$definition['label']} unter {$definition['path']} für diese persönliche Website.\n\n";
+	if ( ! empty( $options['ai']['free_tier'] ) ) {
+		$prompt .= "Betriebsprofil: kompakt antworten, keine Rückfragen und nur die benötigte Datei ausgeben.\n\n";
+	}
+	$prompt .= "Regeln:\n- Antworte ausschließlich mit dem vollständigen Dateiinhalt, ohne Codeblock, Vorbemerkung oder Erklärung.\n";
+	$prompt .= "- Verwende nur die unten gelieferten Fakten. Erfinde keine Personen, Angebote, Kontaktdaten, Anbieter, IDs oder Rechtsaussagen.\n";
+	$prompt .= "- Verwende für Website-URLs ausschließlich die konfigurierte Website. Keine fremden Links, E-Mail-Adressen oder Telefonnummern ergänzen.\n";
+	$prompt .= "- Bei JSON muss die Ausgabe gültiges JSON sein. Bei Markdown oder Text müssen die vorgesehenen Platzhalter erhalten bleiben, sofern sie im aktuellen Entwurf vorhanden sind.\n\n";
+	$prompt .= "AKTUELLER ENTWURF:\n" . $template . "\n\nFAKTEN AUS VERÖFFENTLICHTEN INHALTEN:\n" . $source;
+
+	$content = adrian_site_text_files_ai_generate_text( $prompt, $options['ai']['provider'], ! empty( $options['ai']['free_tier'] ) );
+	if ( is_wp_error( $content ) ) {
+		return array( 'type' => 'error', 'message' => $content->get_error_message() );
+	}
+	$content = preg_replace( '/^```(?:json|markdown|md|text|xml)?\s*|\s*```$/i', '', trim( (string) $content ) );
+	$check   = adrian_site_text_files_validate_ai_file_output( $key, $content );
+	if ( is_wp_error( $check ) ) {
+		return array( 'type' => 'error', 'message' => $check->get_error_message() );
+	}
+
+	$options['ai']['generator_key']     = $key;
+	$options['ai']['generator_draft']   = adrian_site_text_files_sanitize_template( $content );
+	$options['ai']['generator_last_run'] = time();
+	$options['ai']['last_status']       = 'file_draft';
+	$options['ai']['last_message']      = $definition['label'] . ' wurde als Vorschlag erzeugt und nicht veröffentlicht.';
+	update_option( ADRIAN_SITE_TEXT_FILES_OPTION, $options, false );
+
+	return array( 'type' => 'updated', 'message' => $options['ai']['last_message'] );
+}
+
+/**
+ * Apply the last reviewed AI file proposal explicitly.
+ *
+ * @return array{type:string,message:string}|null
+ */
+function adrian_site_text_files_ai_apply_file_admin_form() {
+	if ( 'POST' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? (string) $_SERVER['REQUEST_METHOD'] : '' ) ) {
+		return null;
+	}
+
+	$action = isset( $_POST['adrian_site_text_files_action'] ) && is_string( $_POST['adrian_site_text_files_action'] ) ? sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) : '';
+	if ( 'ai_apply_file' !== $action ) {
+		return null;
+	}
+
+	if ( ! adrian_site_text_files_can_manage() ) {
+		return array( 'type' => 'error', 'message' => 'Zugriff verweigert.' );
+	}
+
+	check_admin_referer( 'adrian_site_text_files_ai_apply_file' );
+	$options     = adrian_site_text_files_options();
+	$key         = $options['ai']['generator_key'];
+	$definitions = adrian_site_text_files_ai_generator_definitions();
+	$content    = $options['ai']['generator_draft'];
+	if ( ! isset( $definitions[ $key ], $options['files'][ $key ] ) || '' === trim( $content ) ) {
+		return array( 'type' => 'error', 'message' => 'Es liegt kein gültiger KI-Vorschlag zum Übernehmen vor.' );
+	}
+
+	$check = adrian_site_text_files_validate_ai_file_output( $key, $content );
+	if ( is_wp_error( $check ) ) {
+		return array( 'type' => 'error', 'message' => $check->get_error_message() );
+	}
+
+	$options['files'][ $key ]['content'] = adrian_site_text_files_sanitize_template( $content );
+	$options['ai']['last_status']       = 'file_applied';
+	$options['ai']['last_message']      = $definitions[ $key ]['label'] . ' wurde nach deiner ausdrücklichen Bestätigung übernommen. Die Veröffentlichungseinstellung blieb unverändert.';
+	update_option( ADRIAN_SITE_TEXT_FILES_OPTION, $options, false );
+	adrian_site_text_files_invalidate_generated();
+
 	return array( 'type' => 'updated', 'message' => $options['ai']['last_message'] );
 }
 
@@ -1285,7 +1477,7 @@ function adrian_site_text_files_generator_admin_form() {
 	// Optional endpoint templates stay disabled unless the owner explicitly
 	// enables them. Even then, ads.txt needs real seller rows before use.
 	$options['files'][ $key ]['content'] = adrian_site_text_files_sanitize_template( $content );
-	if ( $enable && ! in_array( $key, array( 'ads', 'app_ads', 'tdmrep', 'ai', 'ai_json', 'opensearch' ), true ) ) {
+	if ( $enable && ! in_array( $key, array( 'ads', 'app_ads', 'tdmrep', 'ai', 'ai_json', 'ai_safety', 'opensearch' ), true ) ) {
 		$options['files'][ $key ]['enabled'] = true;
 	}
 
@@ -1596,6 +1788,12 @@ function adrian_site_text_files_render_admin_page() {
 		$notice = adrian_site_text_files_ai_run_admin_form();
 	}
 	if ( ! is_array( $notice ) ) {
+		$notice = adrian_site_text_files_ai_generate_file_admin_form();
+	}
+	if ( ! is_array( $notice ) ) {
+		$notice = adrian_site_text_files_ai_apply_file_admin_form();
+	}
+	if ( ! is_array( $notice ) ) {
 		$notice = adrian_site_text_files_import_admin_form();
 	}
 	if ( ! is_array( $notice ) ) {
@@ -1655,7 +1853,7 @@ function adrian_site_text_files_render_admin_page() {
 				<p class="adrian-stf-help">Dieses Betriebsprofil teilt der Anfrage mit, dass sparsam gearbeitet werden soll. Das Plugin begrenzt die Quellen dabei auf höchstens 20.000 Zeichen, kürzt die Antwort auf 1.400 Tokens und fordert keine zusätzlichen Werkzeuge oder Rückfragen an. Es aktiviert keinen Zugang, ändert keine Abrechnung und hebt keine Anbieterlimits auf.</p>
 				<p><label><input type="checkbox" name="ai[enabled]" value="1" <?php checked( $ai['enabled'] ); ?>> Stündliche Aktualisierung aktivieren</label></p>
 				<p><label><input type="checkbox" name="ai[auto_publish]" value="1" <?php checked( $ai['auto_publish'] ); ?>> Gültige Vorschläge automatisch in die öffentliche <code>llms.txt</code> übernehmen</label></p>
-				<p class="adrian-stf-help"><label><input type="checkbox" name="ai_confirm" value="1"> Ich bestätige, dass ausgewählte veröffentlichte Inhalte an den gewählten KI-Connector übertragen werden dürfen.</label></p>
+				<p class="adrian-stf-help"><label><input type="checkbox" name="ai_confirm" value="1"> Ich bestätige, dass ausgewählte veröffentlichte Inhalte für automatische Läufe oder manuelle Dateivorschläge an den gewählten KI-Connector übertragen werden dürfen.</label></p>
 				<div class="adrian-stf-actions">
 					<?php submit_button( 'KI-Einstellungen speichern', 'primary', 'submit', false ); ?>
 					<span class="adrian-stf-help">Standardmäßig bleibt die automatische Veröffentlichung ausgeschaltet.</span>
@@ -1672,6 +1870,39 @@ function adrian_site_text_files_render_admin_page() {
 			<?php if ( '' !== $ai['draft'] ) : ?>
 				<label for="adrian-stf-ai-draft"><strong>Letzter KI-Vorschlag (nur Vorschau)</strong></label>
 				<textarea id="adrian-stf-ai-draft" class="adrian-stf-code" rows="10" readonly spellcheck="false"><?php echo esc_textarea( $ai['draft'] ); ?></textarea>
+			<?php endif; ?>
+		</section>
+
+		<?php $ai_file_definitions = adrian_site_text_files_ai_generator_definitions(); ?>
+		<section class="adrian-stf-card adrian-stf-card--assistant" aria-labelledby="adrian-stf-ai-file-title">
+			<h2 id="adrian-stf-ai-file-title">KI-Vorschlag für eine Website-Datei</h2>
+			<p>Du kannst einzelne Dateien mit dem freigegebenen WordPress-Connector vorformulieren lassen. Der Vorschlag bleibt zunächst intern und wird erst nach einer zweiten, ausdrücklichen Bestätigung übernommen. <code>security.txt</code>, <code>ads.txt</code> und <code>app-ads.txt</code> bleiben bewusst manuell, damit keine Kontaktwege oder Verkäufer-IDs erfunden werden.</p>
+			<form method="post">
+				<?php wp_nonce_field( 'adrian_site_text_files_ai_generate_file' ); ?>
+				<input type="hidden" name="adrian_site_text_files_action" value="ai_generate_file">
+				<div class="adrian-stf-grid">
+					<div class="adrian-stf-field">
+						<label for="adrian-stf-ai-file-key">Datei</label>
+						<select id="adrian-stf-ai-file-key" name="ai_file_key">
+							<?php foreach ( $ai_file_definitions as $ai_file_key => $ai_file_definition ) : ?>
+								<option value="<?php echo esc_attr( $ai_file_key ); ?>" <?php selected( $ai['generator_key'], $ai_file_key ); ?>><?php echo esc_html( $ai_file_definition['label'] ); ?></option>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="adrian-stf-field adrian-stf-actions">
+						<?php submit_button( 'Vorschlag erzeugen', 'secondary', 'submit', false ); ?>
+					</div>
+				</div>
+			</form>
+			<?php if ( '' !== $ai['generator_draft'] && isset( $ai_file_definitions[ $ai['generator_key'] ] ) ) : ?>
+				<hr class="adrian-stf-divider">
+				<p><strong>Letzter Vorschlag:</strong> <?php echo esc_html( $ai_file_definitions[ $ai['generator_key'] ]['label'] ); ?><?php if ( $ai['generator_last_run'] ) : ?> · <?php echo esc_html( wp_date( 'd.m.Y H:i', $ai['generator_last_run'] ) ); ?><?php endif; ?></p>
+				<textarea class="adrian-stf-code" rows="12" readonly spellcheck="false"><?php echo esc_textarea( $ai['generator_draft'] ); ?></textarea>
+				<form method="post">
+					<?php wp_nonce_field( 'adrian_site_text_files_ai_apply_file' ); ?>
+					<input type="hidden" name="adrian_site_text_files_action" value="ai_apply_file">
+					<?php submit_button( 'Vorschlag ausdrücklich übernehmen', 'primary', 'submit', false ); ?>
+				</form>
 			<?php endif; ?>
 		</section>
 
