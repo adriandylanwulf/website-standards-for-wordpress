@@ -24,7 +24,7 @@ if ( ! in_array( $adrian_site_cache_request_method, [ 'GET', 'HEAD' ], true ) ||
 	return;
 }
 
-foreach ( [ '/wp-admin', '/wp-login.php', '/wp-json', '/xmlrpc.php', '/wp-cron.php', '/feed', '/comments/feed', '/sitemap', '/.well-known' ] as $adrian_site_cache_excluded_path ) {
+foreach ( [ '/wp-admin', '/wp-login.php', '/wp-json', '/xmlrpc.php', '/wp-cron.php', '/feed', '/comments/feed', '/sitemap', '/wp-sitemap', '/robots.txt', '/manifest.webmanifest', '/llms.txt', '/humans.txt', '/.well-known' ] as $adrian_site_cache_excluded_path ) {
 	if ( 0 === strpos( $adrian_site_cache_path, $adrian_site_cache_excluded_path ) ) {
 		return;
 	}
@@ -41,7 +41,7 @@ $adrian_site_cache_early   = false;
 if ( is_readable( $adrian_site_cache_config ) ) {
 	$adrian_site_cache_values = require $adrian_site_cache_config;
 	if ( is_array( $adrian_site_cache_values ) ) {
-			if ( '1.3.0' !== (string) ( $adrian_site_cache_values['version'] ?? '' ) || 'native' !== (string) ( $adrian_site_cache_values['engine'] ?? '' ) || ! empty( $adrian_site_cache_values['multisite'] ) ) {
+		if ( 2 !== absint( $adrian_site_cache_values['dropin_version'] ?? 0 ) || 'native' !== (string) ( $adrian_site_cache_values['engine'] ?? '' ) || ! empty( $adrian_site_cache_values['multisite'] ) ) {
 			return;
 		}
 		$adrian_site_cache_ttl     = max( 60, (int) ( $adrian_site_cache_values['ttl'] ?? 900 ) );
@@ -127,4 +127,3 @@ if ( 'HEAD' !== $adrian_site_cache_request_method ) {
 }
 
 exit;
-
