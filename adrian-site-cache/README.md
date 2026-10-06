@@ -2,7 +2,7 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.4.0
+Aktuelle Version: 1.4.1
 
 ## Konzept
 
@@ -31,6 +31,7 @@ Optional enthält das Plugin einen eigenen Datei-Cache als vollständige Ablösu
 - Wiederholte Browser-Anfragen an unveränderte Cache-Dateien werden über ETag/Last-Modified mit `304 Not Modified` beantwortet.
 - Optionales, standardmäßig deaktiviertes Cache-Aufwärmen für die Startseite und die konfigurierte Blog-Einstiegsseite; es verwendet ausschließlich same-origin-GET-Anfragen und speichert keine Antwortinhalte.
 - Manuelles Aufwärmen über die Wartungsseite oder `wp adrian-cache warm`.
+- Öffentliche Seiten werden nach neuen, bearbeiteten, gelöschten oder moderierten Kommentaren sofort aus dem Cache entfernt, damit sichtbare Kommentare nicht bis zum TTL-Ablauf verzögert werden.
 - Ein geschützter Button „Cache leeren“ in der WordPress-Adminleiste für angemeldete Administratoren.
 - Die Adminleisten-Aktion verwendet ausschließlich `admin-post.php`, eine Capability-Prüfung und einen eigenen Nonce; es gibt keinen öffentlichen Lösch-Endpunkt.
 
