@@ -19,8 +19,11 @@ $adrian_site_cache_request_uri    = (string) ( $_SERVER['REQUEST_URI'] ?? '/' );
 $adrian_site_cache_query          = (string) ( $_SERVER['QUERY_STRING'] ?? '' );
 $adrian_site_cache_cookie         = (string) ( $_SERVER['HTTP_COOKIE'] ?? '' );
 $adrian_site_cache_path           = (string) parse_url( $adrian_site_cache_request_uri, PHP_URL_PATH );
+$adrian_site_cache_cache_control  = strtolower( (string) ( $_SERVER['HTTP_CACHE_CONTROL'] ?? '' ) );
+$adrian_site_cache_pragma         = strtolower( (string) ( $_SERVER['HTTP_PRAGMA'] ?? '' ) );
+$adrian_site_cache_requested_with = strtolower( (string) ( $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '' ) );
 
-if ( ! in_array( $adrian_site_cache_request_method, [ 'GET', 'HEAD' ], true ) || '' !== $adrian_site_cache_query || '' !== $adrian_site_cache_cookie || '' !== (string) ( $_SERVER['HTTP_AUTHORIZATION'] ?? '' ) ) {
+if ( ! in_array( $adrian_site_cache_request_method, [ 'GET', 'HEAD' ], true ) || '' !== $adrian_site_cache_query || '' !== $adrian_site_cache_cookie || '' !== (string) ( $_SERVER['HTTP_AUTHORIZATION'] ?? '' ) || preg_match( '/(?:^|,)\s*(?:no-cache|no-store|max-age\s*=\s*0)\s*(?:,|$)/', $adrian_site_cache_cache_control ) || false !== strpos( $adrian_site_cache_pragma, 'no-cache' ) || 'xmlhttprequest' === $adrian_site_cache_requested_with ) {
 	return;
 }
 
