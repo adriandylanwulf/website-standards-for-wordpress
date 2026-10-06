@@ -49,11 +49,11 @@ $notes_query = new WP_Query(
 	)
 );
 ?>
-<section class="dj-home-stage">
+<section class="dj-home-stage" aria-labelledby="home-intro-title">
 	<div class="dj-width dj-home-intro">
 		<div class="dj-home-intro__copy">
 			<p class="dj-eyebrow"><?php esc_html_e( 'Ein paar Dinge von mir', 'dylan-journal' ); ?></p>
-			<h1><?php esc_html_e( 'Was ich gerade mache, sehe und ausprobiere.', 'dylan-journal' ); ?></h1>
+			<h1 id="home-intro-title"><?php esc_html_e( 'Was ich gerade mache, sehe und ausprobiere.', 'dylan-journal' ); ?></h1>
 			<p class="dj-intro__copy"><?php esc_html_e( 'Ich bin Adrian. Hier sammle ich Beiträge über Technik und Webhosting, Fotos von unterwegs und Gedanken, die ich nicht gleich wieder vergessen möchte.', 'dylan-journal' ); ?></p>
 			<div class="dj-home-intro__links">
 				<a class="dj-quiet-link" href="<?php echo esc_url( $about_url ); ?>"><?php esc_html_e( 'Kurz zu mir', 'dylan-journal' ); ?></a>
@@ -82,12 +82,12 @@ $notes_query = new WP_Query(
 	</div>
 </section>
 
-<section class="dj-section dj-section--journal">
+<section class="dj-section dj-section--journal" aria-labelledby="latest-notes-title">
 	<div class="dj-width">
 		<div class="dj-section__head dj-section__head--v2">
 			<div>
 			<p class="dj-eyebrow"><?php esc_html_e( 'Aus dem Blog', 'dylan-journal' ); ?></p>
-				<h2 class="dj-section-title"><?php esc_html_e( 'Zuletzt aufgeschrieben', 'dylan-journal' ); ?></h2>
+				<h2 id="latest-notes-title" class="dj-section-title"><?php esc_html_e( 'Zuletzt aufgeschrieben', 'dylan-journal' ); ?></h2>
 			</div>
 				<p class="dj-section__hint"><?php esc_html_e( 'Gedanken, Erfahrungen und Erklärungen aus meinem Alltag – ohne großes Drumherum.', 'dylan-journal' ); ?></p>
 		</div>
@@ -130,11 +130,11 @@ $notes_query = new WP_Query(
 	</div>
 </section>
 
-<section class="dj-section dj-section--soft">
+<section class="dj-section dj-section--soft" aria-labelledby="explore-title">
 	<div class="dj-width dj-explore">
 		<div>
 			<p class="dj-eyebrow"><?php esc_html_e( 'Hier entlang', 'dylan-journal' ); ?></p>
-			<h2 class="dj-section-title"><?php esc_html_e( 'Was du hier findest', 'dylan-journal' ); ?></h2>
+			<h2 id="explore-title" class="dj-section-title"><?php esc_html_e( 'Was du hier findest', 'dylan-journal' ); ?></h2>
 			<p class="dj-explore__intro"><?php esc_html_e( 'Keine Sammlung von Angeboten, sondern ein persönlicher Ort für Dinge, die mir wichtig sind.', 'dylan-journal' ); ?></p>
 		</div>
 		<div class="dj-explore__links">
@@ -145,11 +145,11 @@ $notes_query = new WP_Query(
 	</div>
 </section>
 
-<section class="dj-section dj-section--contact">
+<section class="dj-section dj-section--contact" aria-labelledby="contact-title">
 	<div class="dj-width dj-home-footer">
 		<div>
 			<p class="dj-eyebrow"><?php esc_html_e( 'Kontakt', 'dylan-journal' ); ?></p>
-			<h2 class="dj-section-title"><?php esc_html_e( 'Schreib mir gern.', 'dylan-journal' ); ?></h2>
+			<h2 id="contact-title" class="dj-section-title"><?php esc_html_e( 'Schreib mir gern.', 'dylan-journal' ); ?></h2>
 		</div>
 		<div>
 			<p><?php esc_html_e( 'Wenn du eine Frage zu einem Beitrag hast oder einen Gedanken teilen möchtest, freue ich mich über deine Nachricht.', 'dylan-journal' ); ?></p>
