@@ -1,6 +1,13 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.3.0
+# Adrian Dylan Wulf – persönliches Website-Template 4.3.1
 
 Ein schlankes WordPress-Theme für die persönliche Website von Adrian Dylan Wulf. Es erhält die bestehenden Seiten, Beiträge, Kategorien und URLs; es ändert keine URLs und benötigt keine zusätzlichen Design- oder SEO-Plugins.
+
+## Was Version 4.3.1 verbessert
+
+- die dynamische Fotoseite bleibt für Suchmaschinen indexierbar, sobald ihr öffentliche Bilder zugeordnet sind; die Empty-Page-Regel greift nur noch bei einer tatsächlich leeren Fotoseite
+- das mobile Menü liefert `aria-expanded="false"` bereits im HTML aus und wird anschließend von der vorhandenen Interaktion synchron gehalten
+- Galerie-Bilder erhalten passend zu den tatsächlichen Spaltenbreiten eigene `sizes`-Angaben, damit Browser auf Mobilgeräten und im Desktop keine unnötig großen Varianten laden
+- keine URL, kein Seiteninhalt und keine externe Schrift oder Bibliothek wurde verändert
 
 ## Was Version 4.3.0 verbessert
 

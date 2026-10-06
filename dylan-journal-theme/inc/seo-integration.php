@@ -20,6 +20,24 @@ function dylan_journal_empty_photos_id() {
 		return 0;
 	}
 
+	// The photo page is rendered from attachments assigned to the page. Its
+	// editor content can therefore stay empty while the public page still has
+	// useful, indexable images.
+	$published_photos = get_children(
+		array(
+			'post_parent'    => $page->ID,
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'post_mime_type' => 'image',
+			'numberposts'    => 1,
+			'fields'         => 'ids',
+		)
+	);
+
+	if ( ! empty( $published_photos ) ) {
+		return 0;
+	}
+
 	$content             = $page->post_content;
 	$has_images          = has_post_thumbnail( $page->ID ) || has_block( 'core/image', $content ) || has_block( 'core/gallery', $content ) || has_block( 'core/cover', $content ) || false !== stripos( $content, '<img' );
 	$has_dynamic_content = has_block( 'core/block', $content ) || has_block( 'core/shortcode', $content ) || false !== strpos( $content, '[' );

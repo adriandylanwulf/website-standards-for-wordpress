@@ -30,7 +30,7 @@
 				<span class="dj-brand__note"><?php esc_html_e( 'Persönliche Website', 'dylan-journal' ); ?></span>
 			</a>
 		<details class="dj-menu">
-				<summary class="dj-menu__trigger" aria-controls="site-menu">
+				<summary class="dj-menu__trigger" aria-controls="site-menu" aria-expanded="false">
 					<span class="dj-menu__label"><?php esc_html_e( 'Menü', 'dylan-journal' ); ?></span>
 					<span class="dj-menu__icon" aria-hidden="true"></span>
 			</summary>

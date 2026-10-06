@@ -38,6 +38,7 @@ $photo_items = get_children(
 							$image_attributes = array(
 								'loading'  => 0 === $photo_index ? 'eager' : 'lazy',
 								'decoding' => 'async',
+								'sizes'    => '(max-width: 420px) calc(100vw - 2.25rem), (max-width: 760px) calc(50vw - 1.2rem), (max-width: 1040px) 31vw, 24rem',
 							);
 
 							if ( 0 === $photo_index ) {

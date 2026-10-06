@@ -84,7 +84,7 @@ if ( count( $photo_items ) > 4 ) {
 					<?php foreach ( $photo_items as $photo ) : ?>
 						<figure class="dj-about-gallery__item">
 							<a href="<?php echo esc_url( wp_get_attachment_url( $photo->ID ) ); ?>">
-								<?php echo wp_get_attachment_image( $photo->ID, 'medium_large', false, array( 'loading' => 'lazy', 'decoding' => 'async' ) ); ?>
+							<?php echo wp_get_attachment_image( $photo->ID, 'medium_large', false, array( 'loading' => 'lazy', 'decoding' => 'async', 'sizes' => '(max-width: 420px) calc(100vw - 2.25rem), (max-width: 760px) calc(50vw - 1.2rem), (max-width: 1200px) 25vw, 18rem' ) ); ?>
 							</a>
 							<?php if ( $photo->post_title ) : ?><figcaption><?php echo esc_html( $photo->post_title ); ?></figcaption><?php endif; ?>
 						</figure>
