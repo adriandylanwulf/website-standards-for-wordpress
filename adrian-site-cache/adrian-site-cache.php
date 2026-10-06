@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.4.1
+ * Version: 1.4.2
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,8 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.4.1';
+	private const VERSION      = '1.4.2';
+	private const DROPIN_VERSION = 2;
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
@@ -204,6 +205,9 @@ final class Adrian_Site_Cache {
 		$this->delete_native_cache_files();
 		update_option( self::OPTION, $options, false );
 		$this->ensure_native_cache_dir();
+		if ( ! empty( $options['early'] ) && ! is_multisite() ) {
+			$this->sync_owned_dropin();
+		}
 		update_option( self::VERSION_OPTION, self::VERSION, false );
 	}
 
@@ -289,7 +293,7 @@ final class Adrian_Site_Cache {
 		}
 
 		$path = (string) wp_parse_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '/' ), PHP_URL_PATH );
-		foreach ( [ '/wp-admin', '/wp-login.php', '/wp-json', '/xmlrpc.php', '/wp-cron.php', '/feed', '/comments/feed', '/sitemap' ] as $excluded ) {
+		foreach ( [ '/wp-admin', '/wp-login.php', '/wp-json', '/xmlrpc.php', '/wp-cron.php', '/feed', '/comments/feed', '/sitemap', '/wp-sitemap', '/robots.txt', '/manifest.webmanifest', '/llms.txt', '/humans.txt', '/.well-known' ] as $excluded ) {
 			if ( 0 === strpos( $path, $excluded ) ) {
 				return false;
 			}
@@ -338,6 +342,7 @@ final class Adrian_Site_Cache {
 		$config  = trailingslashit( $this->native_cache_dir() ) . 'config.php';
 		$contents = "<?php\nreturn " . var_export( [
 			'version'    => self::VERSION,
+			'dropin_version' => self::DROPIN_VERSION,
 			'ttl'        => max( 60, (int) $options['ttl'] ),
 			'enabled'    => ! empty( $options['enabled'] ),
 			'early'      => ! empty( $options['early'] ),
