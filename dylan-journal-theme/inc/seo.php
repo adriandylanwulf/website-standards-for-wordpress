@@ -60,6 +60,47 @@ function dylan_journal_has_seo_plugin() {
 }
 
 /**
+ * Keep a description within a predictable search-snippet size.
+ *
+ * Search engines choose their own display length, but keeping the generated
+ * value within a conservative limit prevents an appended ellipsis from
+ * making otherwise valid descriptions longer than intended. The same value
+ * is used for HTML metadata, social previews and JSON-LD.
+ *
+ * @param string $description Candidate description.
+ * @return string
+ */
+function dylan_journal_limit_seo_description( $description ) {
+	$description = preg_replace( '/\s+/u', ' ', wp_strip_all_tags( (string) $description ) );
+	$description = is_string( $description ) ? trim( $description ) : '';
+	$maximum    = 160;
+
+	if ( '' === $description ) {
+		return '';
+	}
+
+	$length = function_exists( 'mb_strlen' ) ? mb_strlen( $description, 'UTF-8' ) : strlen( $description );
+	if ( $length <= $maximum ) {
+		return $description;
+	}
+
+	$body_length = $maximum - 2;
+	$body        = function_exists( 'mb_substr' )
+		? mb_substr( $description, 0, $body_length, 'UTF-8' )
+		: wp_html_excerpt( $description, $body_length, '' );
+	$body        = trim( (string) $body );
+	$last_space  = function_exists( 'mb_strrpos' ) ? mb_strrpos( $body, ' ', 0, 'UTF-8' ) : strrpos( $body, ' ' );
+
+	if ( false !== $last_space && $last_space > (int) floor( $body_length * 0.6 ) ) {
+		$body = function_exists( 'mb_substr' )
+			? mb_substr( $body, 0, $last_space, 'UTF-8' )
+			: substr( $body, 0, $last_space );
+	}
+
+	return rtrim( $body, " \t\n\r\0\x0B.,;:!?-" ) . ' …';
+}
+
+/**
  * Return a concise page-specific search description.
  *
  * Explicit WordPress excerpts always take precedence for individual posts,
@@ -68,6 +109,15 @@ function dylan_journal_has_seo_plugin() {
  * @return string
  */
 function dylan_journal_seo_description() {
+	return dylan_journal_limit_seo_description( dylan_journal_seo_description_raw() );
+}
+
+/**
+ * Build the editorial description before applying the output limit.
+ *
+ * @return string
+ */
+function dylan_journal_seo_description_raw() {
 	if ( is_singular() && post_password_required() ) {
 		return __( 'Dieser Inhalt ist passwortgeschützt.', 'dylan-journal' );
 	}
