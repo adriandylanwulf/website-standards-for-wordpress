@@ -24,30 +24,26 @@ function dylan_journal_portrait_image_id() {
 		return $portrait_id;
 	}
 
-	$portrait_id = 0;
-	$about_page  = get_page_by_path( 'ueber-mich' );
-
-	if ( ! $about_page ) {
-		return $portrait_id;
-	}
-
-	$about_images = get_children(
-		array(
-			'post_parent'    => $about_page->ID,
-			'post_type'      => 'attachment',
-			'post_mime_type' => 'image',
-			'orderby'        => 'menu_order ID',
-			'order'          => 'ASC',
-			'numberposts'    => 1,
-		)
-	);
-
-	if ( $about_images ) {
-		$portrait    = reset( $about_images );
-		$portrait_id = absint( $portrait->ID );
-	}
+	$portrait_id = dylan_journal_page_image_id( 'ueber-mich' );
 
 	return $portrait_id;
+}
+
+/**
+ * Select a current, relevant image for a page's social preview.
+ *
+ * @return int
+ */
+function dylan_journal_social_fallback_image_id() {
+	if ( is_front_page() || is_page( 'fotos' ) ) {
+		$photo_id = dylan_journal_page_image_id( 'fotos' );
+
+		if ( $photo_id ) {
+			return $photo_id;
+		}
+	}
+
+	return dylan_journal_portrait_image_id();
 }
 
 /**
@@ -349,13 +345,9 @@ function dylan_journal_seo_meta() {
 	// Use the current portrait for general pages and a published photo for the
 	// front page and photo archive; never fall back to an unrelated article image.
 	if ( ! $image ) {
-		$fallback_image_id = ( is_front_page() || is_page( 'fotos' ) ) ? 217 : dylan_journal_portrait_image_id();
-
-		if ( ! $fallback_image_id ) {
-			$fallback_image_id = 217;
-		}
+		$fallback_image_id = dylan_journal_social_fallback_image_id();
 		$image             = wp_get_attachment_image_url( $fallback_image_id, 'large' );
-		$image_alt         = get_post_meta( $fallback_image_id, '_wp_attachment_image_alt', true );
+		$image_alt         = $fallback_image_id ? get_post_meta( $fallback_image_id, '_wp_attachment_image_alt', true ) : '';
 	}
 
 	echo '<meta name="description" content="' . esc_attr( $description ) . '">' . "\n";
