@@ -736,7 +736,8 @@ function adrian_site_text_files_validate_content( $key, $content ) {
 	}
 
 	if ( 'security' === $key ) {
-		if ( ! preg_match( '/^Expires:\s*(.+)$/mi', (string) $content, $matches ) ) {
+		$security_content = adrian_site_text_files_render( (string) $content );
+		if ( ! preg_match( '/^Expires:\s*(.+)$/mi', $security_content, $matches ) ) {
 			return new WP_Error( 'security_expiry_missing', 'security.txt muss eine Expires-Angabe enthalten.' );
 		}
 		$expiry = strtotime( trim( $matches[1] ) );
