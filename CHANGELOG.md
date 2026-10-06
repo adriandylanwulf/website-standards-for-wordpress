@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.5.0
+
+- Geschützten Endpunkt-Test für aktivierte Website-Standards ergänzt; geprüft werden nur HTTP-Status, Content-Type und vorhandene Cache-Header.
+- Der Test ist auf den eigenen Website-Host begrenzt, folgt keinen Weiterleitungen und speichert keine Antwortinhalte.
+- `security.txt` wird beim Speichern und in der Statusprüfung auf ein gültiges, zukünftiges Ablaufdatum geprüft.
+
 ## 1.4.0
 
 - Öffentliche Standarddateien senden ETags und beantworten unveränderte Wiederholungsanfragen mit `304 Not Modified`.
@@ -60,3 +66,4 @@
 - Erste stabile Version mit `security.txt`, `llms.txt`, `humans.txt` und Webmanifest.
 - Einzelbenutzer-Sperre für den WordPress-Editor.
 - Dynamische URL-, Jahres- und Ablaufdatum-Platzhalter.
+
