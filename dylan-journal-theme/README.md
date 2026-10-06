@@ -1,6 +1,12 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.3.1
+# Adrian Dylan Wulf – persönliches Website-Template 4.3.2
 
 Ein schlankes WordPress-Theme für die persönliche Website von Adrian Dylan Wulf. Es erhält die bestehenden Seiten, Beiträge, Kategorien und URLs; es ändert keine URLs und benötigt keine zusätzlichen Design- oder SEO-Plugins.
+
+## Was Version 4.3.2 verbessert
+
+- das Hauptbild der Über-mich-Seite wird aus der zugeordneten WordPress-Medienreihenfolge verwendet und nicht mehr über eine fest eingetragene Attachment-ID in den Social-Metadaten referenziert
+- dadurch bleiben Open-Graph- und Twitter-Vorschaubilder beim späteren Austausch des persönlichen Portraits automatisch konsistent
+- keine URLs, Inhalte, externen Schriften oder zusätzlichen Plugins verändert
 
 ## Was Version 4.3.1 verbessert
 
