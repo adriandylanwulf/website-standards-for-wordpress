@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.3.0
+ * Version: 1.4.0
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.3.0';
+	private const VERSION      = '1.4.0';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
@@ -104,6 +104,9 @@ final class Adrian_Site_Cache {
 			add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
 			add_action( 'admin_init', [ $this, 'handle_admin_actions' ] );
 		}
+
+		add_action( 'admin_bar_menu', [ $this, 'register_admin_bar_node' ], 100 );
+		add_action( 'admin_post_adrian_site_cache_toolbar_purge', [ $this, 'handle_toolbar_purge' ] );
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'adrian-cache', [ $this, 'cli_command' ] );
@@ -820,6 +823,60 @@ PHP;
 		add_options_page( 'Adrian Site Cache', 'Site Cache', 'manage_options', 'adrian-site-cache', [ $this, 'render_admin_page' ] );
 	}
 
+	/**
+	 * Add a direct purge action to the WordPress toolbar for administrators.
+	 *
+	 * The action uses admin-post.php, a capability check and a dedicated nonce;
+	 * it never exposes a public purge endpoint or accepts a cache path from the
+	 * request.
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress admin bar instance.
+	 * @return void
+	 */
+	public function register_admin_bar_node( WP_Admin_Bar $wp_admin_bar ): void {
+		if ( ! is_user_logged_in() || ! current_user_can( 'manage_options' ) || ! is_admin_bar_showing() ) {
+			return;
+		}
+
+		$url = add_query_arg(
+			[ 'action' => 'adrian_site_cache_toolbar_purge' ],
+			admin_url( 'admin-post.php' )
+		);
+		$url = wp_nonce_url( $url, 'adrian_site_cache_toolbar_purge' );
+
+		$wp_admin_bar->add_node(
+			[
+				'id'     => 'adrian-site-cache-purge',
+				'parent' => 'top-secondary',
+				'title'  => 'Cache leeren',
+				'href'   => $url,
+				'meta'   => [ 'title' => 'Öffentlichen Seiten-Cache leeren' ],
+			]
+		);
+	}
+
+	/**
+	 * Handle the protected admin-bar purge action.
+	 *
+	 * @return void
+	 */
+	public function handle_toolbar_purge(): void {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'Du bist nicht berechtigt, den Cache zu leeren.', 'adrian-site-cache' ), 403 );
+		}
+
+		check_admin_referer( 'adrian_site_cache_toolbar_purge' );
+		$this->purge( 'toolbar' );
+
+		$referer = wp_get_referer();
+		if ( $referer && false !== strpos( $referer, 'options-general.php?page=adrian-site-cache' ) ) {
+			$referer = add_query_arg( 'message', 'purged', $referer );
+		}
+
+		wp_safe_redirect( $referer ?: admin_url( 'options-general.php?page=adrian-site-cache&message=purged' ) );
+		exit;
+	}
+
 	public function handle_admin_actions(): void {
 		if ( ! is_admin() || ! isset( $_POST['adrian_site_cache_action'] ) || ! current_user_can( 'manage_options' ) ) {
 			return;
@@ -938,6 +995,9 @@ PHP;
 				.adrian-site-cache-admin .asc-maintenance-fact:last-child{border-right:0}
 				.adrian-site-cache-admin .asc-actions{margin-top:16px}
 				.adrian-site-cache-admin .asc-actions .button{border-radius:4px}
+				.adrian-site-cache-admin .asc-help,.adrian-site-cache-admin .description,.adrian-site-cache-admin .asc-note,.adrian-site-cache-admin .notice-inline,.adrian-site-cache-admin .notice-info{overflow-wrap:anywhere}
+				.adrian-site-cache-admin .asc-actions .button:focus-visible,.adrian-site-cache-admin .asc-mode summary:focus-visible{outline:2px solid #2271b1;outline-offset:2px}
+				@media(max-width:782px){.adrian-site-cache-admin{max-width:none;margin-right:12px}.adrian-site-cache-admin .asc-header{gap:14px}.adrian-site-cache-admin .asc-header h1{font-size:24px}.adrian-site-cache-admin .asc-lead{font-size:13px}.adrian-site-cache-admin .asc-maintenance-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.adrian-site-cache-admin .asc-maintenance-fact{min-width:0}.adrian-site-cache-admin .asc-mode-title{flex:1 1 auto;min-width:0}.adrian-site-cache-admin .asc-mode-current{white-space:nowrap}}
 				@media(max-width:600px){.adrian-site-cache-admin .asc-header{padding:18px}.adrian-site-cache-admin .asc-grid,.adrian-site-cache-admin .asc-maintenance-grid{display:grid}.adrian-site-cache-admin .asc-stat,.adrian-site-cache-admin .asc-maintenance-fact{border-right:0;border-bottom:1px solid #e1eaf2}.adrian-site-cache-admin .asc-stat:last-child,.adrian-site-cache-admin .asc-maintenance-fact:last-child{border-bottom:0}.adrian-site-cache-admin .asc-mode summary{align-items:flex-start}.adrian-site-cache-admin .asc-mode-title{flex-basis:auto}.adrian-site-cache-admin .asc-mode-summary{display:none}.adrian-site-cache-admin .asc-mode-body{padding-left:34px}}
 			</style>
 			<div class="asc-header">
@@ -1048,4 +1108,3 @@ PHP;
 register_activation_hook( __FILE__, [ 'Adrian_Site_Cache', 'activate' ] );
 register_deactivation_hook( __FILE__, [ 'Adrian_Site_Cache', 'deactivate' ] );
 Adrian_Site_Cache::instance();
-
