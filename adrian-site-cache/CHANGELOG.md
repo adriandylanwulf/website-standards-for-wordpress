@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.3
+
+- Cache-Bypass für `Cache-Control: no-cache`, `no-store` und `max-age=0` sowie `Pragma: no-cache` ergänzt.
+- AJAX-Anfragen mit `XMLHttpRequest` werden im normalen und frühen Cachepfad nicht mehr als öffentliche HTML-Seiten behandelt.
+- Damit funktionieren harte Browser-Aktualisierungen und das optionale Cache-Aufwärmen zuverlässig gegen eine frische WordPress-Antwort.
+
 ## 1.4.2
 
 - Eigene Drop-in-Schema-Version ergänzt; die optionale frühe Auslieferung wird nicht mehr durch eine veraltete Plugin-Versionsnummer blockiert.
