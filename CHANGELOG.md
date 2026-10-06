@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0
+
+- Geschützten KI-Vorschlagsgenerator für ausgewählte Website-Standards ergänzt.
+- KI-Vorschläge bleiben zunächst als Entwurf gespeichert und werden erst nach erneuter ausdrücklicher Bestätigung übernommen; die Veröffentlichungsoption des jeweiligen Endpunkts bleibt unverändert.
+- `security.txt`, `ads.txt` und `app-ads.txt` bleiben bewusst vom KI-Generator ausgeschlossen, damit keine Kontaktwege oder Verkäufer-IDs erfunden werden.
+- Vorschläge werden auf Dateigröße, aktive Inhalte, JSON-Struktur und erlaubte URL-Hosts geprüft.
+- Den experimentellen, standardmäßig deaktivierten Endpunkt `/.well-known/ai-safety.txt` als klar gekennzeichnete Vorlage ergänzt.
+- Die Datenfreigabe für einen einmaligen Dateivorschlag kann gespeichert werden, ohne die stündliche KI-Automatik einzuschalten.
+
 ## 1.5.0
 
 - Geschützten Endpunkt-Test für aktivierte Website-Standards ergänzt; geprüft werden nur HTTP-Status, Content-Type und vorhandene Cache-Header.
