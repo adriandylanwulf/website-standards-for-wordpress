@@ -135,6 +135,38 @@ function dylan_journal_page_url( $slug, $fallback ) {
 }
 
 /**
+ * Return the first published image assigned to a page.
+ *
+ * This keeps template and social-preview fallbacks tied to the current
+ * editorial media order instead of to a historical attachment ID.
+ *
+ * @param string $page_slug Page slug.
+ * @return int
+ */
+function dylan_journal_page_image_id( $page_slug ) {
+	$page = get_page_by_path( sanitize_title( $page_slug ) );
+
+	if ( ! $page || 'publish' !== $page->post_status ) {
+		return 0;
+	}
+
+	$images = get_children(
+		array(
+			'post_parent'    => $page->ID,
+			'post_type'      => 'attachment',
+			'post_status'    => 'inherit',
+			'post_mime_type' => 'image',
+			'orderby'        => 'menu_order ID',
+			'order'          => 'ASC',
+			'numberposts'    => 1,
+			'fields'         => 'ids',
+		)
+	);
+
+	return $images ? absint( reset( $images ) ) : 0;
+}
+
+/**
  * Return a compact, plain-text excerpt for article lists.
  *
  * @param int $post_id Optional post ID.
