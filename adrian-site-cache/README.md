@@ -2,7 +2,7 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.2.0
+Aktuelle Version: 1.3.0
 
 ## Konzept
 
@@ -29,6 +29,8 @@ Optional enthält das Plugin einen eigenen Datei-Cache als vollständige Ablösu
 - Der normale Datei-Cache liefert vorhandene GZIP-Varianten direkt aus, wenn der Browser sie unterstützt.
 - Manuelle Leerungen entfernen zusätzlich verwaiste GZIP-Neben- und alte temporäre Dateien.
 - Wiederholte Browser-Anfragen an unveränderte Cache-Dateien werden über ETag/Last-Modified mit `304 Not Modified` beantwortet.
+- Optionales, standardmäßig deaktiviertes Cache-Aufwärmen für die Startseite und die konfigurierte Blog-Einstiegsseite; es verwendet ausschließlich same-origin-GET-Anfragen und speichert keine Antwortinhalte.
+- Manuelles Aufwärmen über die Wartungsseite oder `wp adrian-cache warm`.
 
 ## Betrieb
 
@@ -39,3 +41,6 @@ Der eigene Datei-Cache ist der einzige Cache-Weg. Die frühe Auslieferung über 
 Das Plugin registriert einen stündlichen WordPress-Cronjob für die Bereinigung. Wenn Mittwald den Endpunkt `/html/adrian-dylan-wulf/wp-cron.php` alle fünf Minuten aufruft, werden fällige WordPress-Aufgaben automatisch ausgeführt. Die fünf Minuten sind das Prüfintervall des Server-Cronjobs; die eigentliche Cache-Bereinigung bleibt auf den registrierten stündlichen Termin begrenzt. Wenn `DISABLE_WP_CRON` gesetzt ist, zeigt die Administrationsseite den zuletzt registrierten externen Cronlauf an, statt den externen Betrieb pauschal als Fehler zu melden.
 
 Der Modus „Normal“ ist für diese Website der empfohlene Ausgangspunkt. „Stark“ erhöht die Lebensdauer des Caches, schaltet aber niemals automatisch die frühe Drop-in-Auslieferung ein.
+
+Das Aufwärmen wird nur nach ausdrücklicher Aktivierung ausgeführt. Es folgt keinen Weiterleitungen, akzeptiert keine Query-Strings oder fremden Hosts und bleibt bei deaktiviertem Cache wirkungslos.
+
