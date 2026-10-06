@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.2.0
+ * Version: 1.3.0
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,12 +13,13 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.2.0';
+	private const VERSION      = '1.3.0';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
 	private const CRON_LAST_OPTION = 'adrian_site_cache_last_cron_run';
 	private const CRON_HOOK    = 'adrian_site_cache_gc';
+	private const WARM_HOOK    = 'adrian_site_cache_warm';
 	private const CACHE_FOLDER = 'adrian-site-cache';
 
 	private static ?self $instance = null;
@@ -59,6 +60,7 @@ final class Adrian_Site_Cache {
 
 	public static function deactivate(): void {
 		wp_clear_scheduled_hook( self::CRON_HOOK );
+		wp_clear_scheduled_hook( self::WARM_HOOK );
 		self::instance()->remove_owned_dropin();
 	}
 
@@ -72,6 +74,9 @@ final class Adrian_Site_Cache {
 			'max_files'  => 2000,
 			'max_bytes'  => 67108864,
 			'last_purge' => 0,
+			'warm_after_purge' => 0,
+			'last_warm' => 0,
+			'last_warm_message' => '',
 		];
 	}
 
@@ -81,6 +86,7 @@ final class Adrian_Site_Cache {
 		add_action( 'init', [ $this, 'record_cron_run' ], 1 );
 		add_action( 'template_redirect', [ $this, 'maybe_serve_or_buffer' ], 0 );
 		add_action( self::CRON_HOOK, [ $this, 'garbage_collect' ] );
+		add_action( self::WARM_HOOK, [ $this, 'warm_cache' ] );
 
 		add_action( 'save_post', [ $this, 'purge_after_post_change' ], 20, 3 );
 		add_action( 'deleted_post', [ $this, 'purge_after_content_change' ] );
@@ -589,6 +595,91 @@ PHP;
 				$this->remove_owned_dropin();
 			}
 		}
+		if ( ! empty( $options['warm_after_purge'] ) && ! wp_next_scheduled( self::WARM_HOOK ) ) {
+			wp_schedule_single_event( time() + 5, self::WARM_HOOK );
+		}
+	}
+
+	/**
+	 * Return a small, fixed set of same-site URLs that are safe to warm.
+	 * Filters may add URLs, but the host and query-string checks below remain mandatory.
+	 *
+	 * @return array<int, string>
+	 */
+	private function warm_urls(): array {
+		$urls = [ home_url( '/' ) ];
+		$front_id = (int) get_option( 'page_on_front', 0 );
+		$posts_id = (int) get_option( 'page_for_posts', 0 );
+		foreach ( [ $front_id, $posts_id ] as $page_id ) {
+			if ( $page_id > 0 ) {
+				$permalink = get_permalink( $page_id );
+				if ( is_string( $permalink ) && '' !== $permalink ) {
+					$urls[] = $permalink;
+				}
+			}
+		}
+
+		$urls = apply_filters( 'adrian_site_cache_warm_urls', $urls );
+		$home_host = strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+		$safe_urls = [];
+		foreach ( is_array( $urls ) ? $urls : [] as $url ) {
+			$url = is_string( $url ) ? trim( $url ) : '';
+			$parts = wp_parse_url( $url );
+			$host = strtolower( (string) ( $parts['host'] ?? '' ) );
+			$scheme = strtolower( (string) ( $parts['scheme'] ?? '' ) );
+			if ( '' === $url || $host !== $home_host || ! in_array( $scheme, [ 'http', 'https' ], true ) || ! empty( $parts['query'] ) || ! empty( $parts['fragment'] ) ) {
+				continue;
+			}
+			$safe_urls[] = esc_url_raw( $url );
+		}
+
+		return array_values( array_unique( array_filter( $safe_urls ) ) );
+	}
+
+	/**
+	 * Warm a few public pages after a purge. No response body is retained.
+	 *
+	 * @return array{success:int,total:int,message:string}
+	 */
+	public function warm_cache(): array {
+		$options = $this->options();
+		if ( empty( $options['enabled'] ) || ! $this->native_mode() ) {
+			return [ 'success' => 0, 'total' => 0, 'message' => 'Cache-Aufwärmen ist deaktiviert.' ];
+		}
+
+		$success = 0;
+		$total   = 0;
+		foreach ( $this->warm_urls() as $url ) {
+			++$total;
+			$response = wp_safe_remote_get(
+				$url,
+				[
+					'timeout'             => 5,
+					'redirection'         => 0,
+					'blocking'            => true,
+					'limit_response_size' => 5 * MB_IN_BYTES,
+					'reject_unsafe_urls'  => true,
+					'headers'             => [
+						'Accept'          => 'text/html',
+						'Accept-Encoding' => 'identity',
+						'Cache-Control'   => 'no-cache',
+					],
+				]
+			);
+			if ( is_wp_error( $response ) ) {
+				continue;
+			}
+			$status      = (int) wp_remote_retrieve_response_code( $response );
+			$content_type = strtolower( (string) wp_remote_retrieve_header( $response, 'content-type' ) );
+			if ( $status >= 200 && $status < 300 && false !== strpos( $content_type, 'text/html' ) ) {
+				++$success;
+			}
+		}
+
+		$options['last_warm']         = time();
+		$options['last_warm_message'] = sprintf( '%d von %d öffentlichen Seiten geprüft.', $success, $total );
+		update_option( self::OPTION, $options, false );
+		return [ 'success' => $success, 'total' => $total, 'message' => $options['last_warm_message'] ];
 	}
 
 	public function garbage_collect(): void {
@@ -744,6 +835,10 @@ PHP;
 			$this->garbage_collect();
 			$this->redirect_admin( 'collected' );
 		}
+		if ( 'warm' === $action ) {
+			$this->warm_cache();
+			$this->redirect_admin( 'warmed' );
+		}
 		if ( 'save' !== $action ) {
 			return;
 		}
@@ -764,6 +859,7 @@ PHP;
 		$options['ttl']       = $modes[ $mode ]['ttl'];
 		$options['max_files'] = $modes[ $mode ]['max_files'];
 		$options['max_bytes'] = $modes[ $mode ]['max_bytes'];
+		$options['warm_after_purge'] = empty( $_POST['warm_after_purge'] ) ? 0 : 1;
 		update_option( self::OPTION, $options, false );
 		$this->ensure_native_cache_dir();
 		if ( ! empty( $options['early'] ) ) {
@@ -797,6 +893,7 @@ PHP;
 			'saved'     => 'Cache-Einstellungen gespeichert.',
 			'purged'    => 'Alle Cache-Dateien wurden geleert.',
 			'collected' => 'Abgelaufene Cache-Dateien wurden bereinigt.',
+			'warmed'    => 'Öffentliche Seiten wurden geprüft und – soweit möglich – vorgewärmt.',
 		];
 		?>
 		<div class="wrap adrian-site-cache-admin">
@@ -836,7 +933,7 @@ PHP;
 				.adrian-site-cache-admin .asc-mode-body{padding:0 36px 14px;color:#536579;font-size:12px;line-height:1.5}
 				.adrian-site-cache-admin .asc-mode-body strong{display:inline;margin:0;color:#243b50}
 				.adrian-site-cache-admin .asc-facts{margin-top:14px;padding-top:12px}
-				.adrian-site-cache-admin .asc-maintenance-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid #d9e2ec;border-bottom:1px solid #d9e2ec}
+				.adrian-site-cache-admin .asc-maintenance-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border-top:1px solid #d9e2ec;border-bottom:1px solid #d9e2ec}
 				.adrian-site-cache-admin .asc-maintenance-fact{padding:12px 16px;background:#fff;border:0;border-right:1px solid #e1eaf2;border-radius:0}
 				.adrian-site-cache-admin .asc-maintenance-fact:last-child{border-right:0}
 				.adrian-site-cache-admin .asc-actions{margin-top:16px}
@@ -868,6 +965,7 @@ PHP;
 					<div>
 						<label class="asc-toggle"><input type="checkbox" name="enabled" value="1" <?php checked( ! empty( $options['enabled'] ) ); ?>><span><strong>Cache-Steuerung aktiv</strong><small>Öffentliche, parameterlose Seiten werden zwischengespeichert.</small></span></label>
 						<label class="asc-toggle"><input type="checkbox" name="early" value="1" <?php checked( ! empty( $options['early'] ) ); ?>><span><strong>Frühe Auslieferung über den Drop-in</strong><small>Optional: Cache-Treffer werden vor dem WordPress-Start ausgeliefert.</small></span></label>
+						<label class="asc-toggle"><input type="checkbox" name="warm_after_purge" value="1" <?php checked( ! empty( $options['warm_after_purge'] ) ); ?>><span><strong>Öffentliche Seiten nach Leerung vorwärmen</strong><small>Prüft nach einer Leerung Startseite und konfigurierten Blog-Einstieg mit wenigen, internen GET-Anfragen. Standardmäßig aus.</small></span></label>
 						<p class="asc-note"><strong>Eigener Datei-Cache.</strong> Diese Version arbeitet eigenständig und benötigt kein zusätzliches Full-Page-Cache-Plugin. Die frühe Auslieferung bleibt aus Sicherheitsgründen standardmäßig deaktiviert und sollte erst nach einem Test von Login, Formularen, Datenschutz und allen dynamischen Bereichen aktiviert werden.</p>
 					</div>
 					<div>
@@ -897,6 +995,7 @@ PHP;
 					<div class="asc-maintenance-fact"><span>Letzte Leerung</span><strong><?php echo $options['last_purge'] ? esc_html( wp_date( 'd.m.Y H:i', (int) $options['last_purge'] ) ) : 'Noch nicht'; ?></strong></div>
 					<div class="asc-maintenance-fact"><span>Nächste Cache-Bereinigung</span><strong><?php echo $cron ? esc_html( wp_date( 'd.m.Y H:i', $cron ) ) : 'Nicht geplant'; ?></strong></div>
 					<div class="asc-maintenance-fact"><span>Letzter externer Cronlauf</span><strong><?php echo defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ? ( $last_cron ? esc_html( wp_date( 'd.m.Y H:i', $last_cron ) ) : 'Noch nicht' ) : 'Nicht verwendet'; ?></strong></div>
+					<div class="asc-maintenance-fact"><span>Letztes Aufwärmen</span><strong><?php echo ! empty( $options['last_warm'] ) ? esc_html( wp_date( 'd.m.Y H:i', (int) $options['last_warm'] ) ) : 'Noch nicht'; ?></strong></div>
 				</div>
 				<?php if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) : ?>
 					<p class="notice-info">Der interne WordPress-Cron ist deaktiviert. Die Wartung wird über den externen Server-Cronjob ausgeführt. <?php echo $last_cron ? 'Letzter registrierter Cronlauf: ' . esc_html( wp_date( 'd.m.Y H:i', $last_cron ) ) . '.' : 'Ein externer Cronlauf wurde bisher noch nicht registriert.'; ?></p>
@@ -907,6 +1006,7 @@ PHP;
 				<div class="asc-actions">
 					<form method="post"><?php wp_nonce_field( 'adrian_site_cache_settings' ); ?><input type="hidden" name="adrian_site_cache_action" value="purge"><button class="button">Alle Caches leeren</button></form>
 					<form method="post"><?php wp_nonce_field( 'adrian_site_cache_settings' ); ?><input type="hidden" name="adrian_site_cache_action" value="gc"><button class="button">Eigene Cache-Dateien bereinigen</button></form>
+					<form method="post"><?php wp_nonce_field( 'adrian_site_cache_settings' ); ?><input type="hidden" name="adrian_site_cache_action" value="warm"><button class="button">Öffentliche Seiten vorwärmen</button></form>
 				</div>
 			</div>
 		</div>
@@ -925,6 +1025,11 @@ PHP;
 			WP_CLI::success( 'Eigene Cache-Dateien bereinigt.' );
 			return;
 		}
+		if ( 'warm' === $action ) {
+			$result = $this->warm_cache();
+			WP_CLI::success( $result['message'] );
+			return;
+		}
 
 		$options = $this->options();
 		$stats   = $this->cache_stats();
@@ -932,7 +1037,9 @@ PHP;
 		WP_CLI::log( 'engine=native' );
 		WP_CLI::log( 'mode=' . $options['mode'] );
 		WP_CLI::log( 'early=' . ( ! empty( $options['early'] ) ? '1' : '0' ) );
+		WP_CLI::log( 'warm_after_purge=' . ( ! empty( $options['warm_after_purge'] ) ? '1' : '0' ) );
 		WP_CLI::log( 'last_cron_run=' . ( (int) get_option( self::CRON_LAST_OPTION, 0 ) ?: '0' ) );
+		WP_CLI::log( 'last_warm=' . ( (int) ( $options['last_warm'] ?? 0 ) ?: '0' ) );
 		WP_CLI::log( 'cache_files=' . $stats['count'] );
 		WP_CLI::log( 'cache_bytes=' . $stats['bytes'] );
 	}
@@ -941,3 +1048,4 @@ PHP;
 register_activation_hook( __FILE__, [ 'Adrian_Site_Cache', 'activate' ] );
 register_deactivation_hook( __FILE__, [ 'Adrian_Site_Cache', 'deactivate' ] );
 Adrian_Site_Cache::instance();
+
