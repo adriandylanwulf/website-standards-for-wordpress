@@ -1,6 +1,12 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.3.3
+# Adrian Dylan Wulf – persönliches Website-Template 4.3.4
 
 Ein schlankes WordPress-Theme für die persönliche Website von Adrian Dylan Wulf. Es erhält die bestehenden Seiten, Beiträge, Kategorien und URLs; es ändert keine URLs und benötigt keine zusätzlichen Design- oder SEO-Plugins.
+
+## Was Version 4.3.4 verbessert
+
+- SEO-Beschreibungen werden zentral normalisiert und auf höchstens 160 Zeichen begrenzt; dadurch bleiben Such-Metadaten, Social-Previews und JSON-LD konsistent
+- lange Beschreibungen werden an einer Wortgrenze gekürzt und erhalten nur dann eine Auslassung, wenn sie tatsächlich gekürzt werden
+- keine URLs, Inhalte, externen Schriften oder zusätzlichen Plugins verändert
 
 ## Was Version 4.3.3 verbessert
 
