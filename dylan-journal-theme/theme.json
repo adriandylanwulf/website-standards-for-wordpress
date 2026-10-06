@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schemas.wp.org/wp/7.1/theme.json",
+  "version": 3,
+  "settings": {
+    "appearanceTools": true,
+    "color": {
+      "custom": false,
+      "defaultPalette": false,
+      "palette": [
+        { "slug": "paper", "color": "#fbfaf7", "name": "Papier" },
+        { "slug": "surface", "color": "#fffefa", "name": "Fläche" },
+        { "slug": "ink", "color": "#20313b", "name": "Tiefes Blau-Grau" },
+        { "slug": "muted", "color": "#536a76", "name": "Gedämpft" },
+        { "slug": "line", "color": "#d8e0df", "name": "Linie" },
+        { "slug": "accent", "color": "#2b7392", "name": "Blau" },
+        { "slug": "accent-pale", "color": "#edf4f2", "name": "Helles Blau-Grün" }
+      ]
+    },
+    "layout": {
+      "contentSize": "42rem",
+      "wideSize": "62rem"
+    },
+    "spacing": {
+      "blockGap": true,
+      "margin": true,
+      "padding": true,
+      "units": ["px", "rem", "%", "vw"]
+    },
+    "typography": {
+      "customFontSize": false,
+      "dropCap": false,
+      "fontFamilies": [
+        {
+          "fontFamily": "Georgia, Cambria, 'Times New Roman', serif",
+          "name": "Editorial Serif",
+          "slug": "editorial-serif"
+        },
+        {
+          "fontFamily": "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif",
+          "name": "System Sans",
+          "slug": "system-sans"
+        }
+      ]
+    }
+  },
+  "styles": {
+    "color": {
+      "background": "var:preset|color|paper",
+      "text": "var:preset|color|ink"
+    },
+    "elements": {
+      "link": {
+        "color": {
+          "text": "var:preset|color|accent"
+        },
+        "typography": {
+          "textDecoration": "underline"
+        }
+      }
+    }
+  }
+}
