@@ -10,6 +10,47 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
+ * Return the current portrait assigned to the About page.
+ *
+ * Keeping this lookup dynamic means replacing the portrait in the media
+ * library also updates social previews without another hard-coded ID.
+ *
+ * @return int
+ */
+function dylan_journal_portrait_image_id() {
+	static $portrait_id = null;
+
+	if ( null !== $portrait_id ) {
+		return $portrait_id;
+	}
+
+	$portrait_id = 0;
+	$about_page  = get_page_by_path( 'ueber-mich' );
+
+	if ( ! $about_page ) {
+		return $portrait_id;
+	}
+
+	$about_images = get_children(
+		array(
+			'post_parent'    => $about_page->ID,
+			'post_type'      => 'attachment',
+			'post_mime_type' => 'image',
+			'orderby'        => 'menu_order ID',
+			'order'          => 'ASC',
+			'numberposts'    => 1,
+		)
+	);
+
+	if ( $about_images ) {
+		$portrait    = reset( $about_images );
+		$portrait_id = absint( $portrait->ID );
+	}
+
+	return $portrait_id;
+}
+
+/**
  * Let a dedicated SEO plugin own metadata when one is active.
  *
  * @return bool
@@ -308,7 +349,11 @@ function dylan_journal_seo_meta() {
 	// Use the current portrait for general pages and a published photo for the
 	// front page and photo archive; never fall back to an unrelated article image.
 	if ( ! $image ) {
-		$fallback_image_id = ( is_front_page() || is_page( 'fotos' ) ) ? 217 : 238;
+		$fallback_image_id = ( is_front_page() || is_page( 'fotos' ) ) ? 217 : dylan_journal_portrait_image_id();
+
+		if ( ! $fallback_image_id ) {
+			$fallback_image_id = 217;
+		}
 		$image             = wp_get_attachment_image_url( $fallback_image_id, 'large' );
 		$image_alt         = get_post_meta( $fallback_image_id, '_wp_attachment_image_alt', true );
 	}
