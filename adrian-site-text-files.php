@@ -17,6 +17,7 @@ defined( 'ABSPATH' ) || exit;
 define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.6.0' );
 define( 'ADRIAN_SITE_TEXT_FILES_OPTION', 'adrian_site_text_files_options' );
 define( 'ADRIAN_SITE_TEXT_FILES_QUERY_VAR', 'adrian_site_text_file' );
+define( 'ADRIAN_SITE_TEXT_FILES_VERSION_OPTION', 'adrian_site_text_files_version' );
 
 /**
  * Return the immutable list of supported public files.
@@ -1153,13 +1154,34 @@ function adrian_site_text_files_activate() {
 			$defaults['allowed_user_id'] = (int) $admins[0]->ID;
 		}
 
-		update_option( ADRIAN_SITE_TEXT_FILES_OPTION, $defaults, false );
-	}
+			update_option( ADRIAN_SITE_TEXT_FILES_OPTION, $defaults, false );
+		}
 
+	update_option( ADRIAN_SITE_TEXT_FILES_VERSION_OPTION, ADRIAN_SITE_TEXT_FILES_VERSION, false );
 	adrian_site_text_files_register_routes();
 	flush_rewrite_rules();
 }
 register_activation_hook( __FILE__, 'adrian_site_text_files_activate' );
+
+/**
+ * Flush rewrite rules once after a plugin update adds or changes a route.
+ *
+ * This is deliberately limited to an administrator request and runs only
+ * when the stored plugin version differs. Public requests never trigger a
+ * rewrite flush.
+ *
+ * @return void
+ */
+function adrian_site_text_files_maybe_upgrade() {
+	if ( ! current_user_can( 'manage_options' ) || ADRIAN_SITE_TEXT_FILES_VERSION === get_option( ADRIAN_SITE_TEXT_FILES_VERSION_OPTION ) ) {
+		return;
+	}
+
+	adrian_site_text_files_register_routes();
+	flush_rewrite_rules( false );
+	update_option( ADRIAN_SITE_TEXT_FILES_VERSION_OPTION, ADRIAN_SITE_TEXT_FILES_VERSION, false );
+}
+add_action( 'admin_init', 'adrian_site_text_files_maybe_upgrade', 1 );
 
 /**
  * Flush routes when the plugin is deactivated.
