@@ -18,10 +18,10 @@ while ( have_posts() ) :
 	<header class="dj-page-header dj-page-header--online">
 		<div class="dj-width">
 			<p class="dj-eyebrow"><?php esc_html_e( 'Öffentliche Profile', 'dylan-journal' ); ?></p>
-			<h1 class="dj-page-title"><?php the_title(); ?></h1>
+			<h1 id="online-title" class="dj-page-title"><?php the_title(); ?></h1>
 		</div>
 	</header>
-	<article id="post-<?php the_ID(); ?>" <?php post_class( 'dj-reading dj-page dj-online-page' ); ?>>
+	<article id="post-<?php the_ID(); ?>" aria-labelledby="online-title" <?php post_class( 'dj-reading dj-page dj-online-page' ); ?>>
 		<div class="dj-prose">
 			<?php the_content(); ?>
 		</div>
