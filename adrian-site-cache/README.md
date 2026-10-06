@@ -2,7 +2,14 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.4.1
+Aktuelle Version: 1.4.2
+
+## Was Version 1.4.2 verbessert
+
+- die optionale frühe Auslieferung über `advanced-cache.php` verwendet jetzt eine eigene Drop-in-Schema-Version statt einer veralteten Plugin-Versionsnummer und kann nach einem Plugin-Update korrekt weiterarbeiten
+- ein aktiviertes Drop-in wird nach einem Update wieder synchronisiert, nachdem der alte Cache sicher geleert wurde
+- maschinenlesbare Endpunkte wie `wp-sitemap.xml`, `robots.txt`, `manifest.webmanifest`, `llms.txt`, `humans.txt` und `/.well-known/` werden im frühen Cachepfad ausdrücklich ausgelassen
+- dieselben Endpunkte werden auch im normalen WordPress-Cachepfad nicht als HTML-Seiten gespeichert
 
 ## Konzept
 
