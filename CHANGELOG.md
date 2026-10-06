@@ -10,6 +10,7 @@
 - Die Datenfreigabe für einen einmaligen Dateivorschlag kann gespeichert werden, ohne die stündliche KI-Automatik einzuschalten.
 - Neue virtuelle Endpunkte werden nach einem Plugin-Update einmalig und nur durch einen Administrator in die Rewrite-Regeln übernommen.
 - Der KI-Cronjob wird nur noch bei aktivierter Automatik und bestätigter Datenfreigabe geplant; alte No-op-Termine werden entfernt.
+- Fehlende Datenfreigabe schaltet alte Automatik- und Auto-Publish-Flags auch zur Laufzeit fail-closed ab.
 
 ## 1.5.0
 
