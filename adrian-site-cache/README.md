@@ -2,7 +2,13 @@
 
 Ein bewusst kleines WordPress-Plugin für die persönliche Website von Adrian Dylan Wulf.
 
-Aktuelle Version: 1.4.2
+Aktuelle Version: 1.4.3
+
+## Was Version 1.4.3 verbessert
+
+- Browser-Anfragen mit `Cache-Control: no-cache`, `no-store` oder `max-age=0` sowie `Pragma: no-cache` umgehen den Cache und erreichen WordPress direkt
+- AJAX-Anfragen mit `XMLHttpRequest` werden nicht als öffentliche HTML-Seiten zwischengespeichert
+- der Bypass gilt im normalen Cachepfad und in der optionalen frühen Drop-in-Auslieferung gleichermaßen
 
 ## Was Version 1.4.2 verbessert
 
