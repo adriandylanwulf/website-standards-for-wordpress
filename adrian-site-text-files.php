@@ -247,6 +247,13 @@ function adrian_site_text_files_options() {
 		'generator_last_run' => isset( $saved_ai['generator_last_run'] ) ? absint( $saved_ai['generator_last_run'] ) : 0,
 	);
 
+	// A missing consent must disable outbound automation at runtime, even if
+	// an older import or release left the two automation flags enabled.
+	if ( empty( $options['ai']['data_consent'] ) ) {
+		$options['ai']['enabled']      = false;
+		$options['ai']['auto_publish'] = false;
+	}
+
 	foreach ( $defaults['files'] as $key => $default_file ) {
 		$saved_file = isset( $saved['files'][ $key ] ) && is_array( $saved['files'][ $key ] ) ? $saved['files'][ $key ] : array();
 		$options['files'][ $key ] = array(
