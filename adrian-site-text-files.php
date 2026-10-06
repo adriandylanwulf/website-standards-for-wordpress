@@ -748,9 +748,9 @@ add_action( 'adrian_site_text_files_ai_refresh_event', 'adrian_site_text_files_a
 function adrian_site_text_files_ai_schedule() {
 	$options  = adrian_site_text_files_options();
 	$next_run = wp_next_scheduled( 'adrian_site_text_files_ai_refresh_event' );
-	if ( ! empty( $options['ai']['enabled'] ) && false === $next_run ) {
+	if ( ! empty( $options['ai']['enabled'] ) && ! empty( $options['ai']['data_consent'] ) && false === $next_run ) {
 		wp_schedule_event( time() + HOUR_IN_SECONDS, 'hourly', 'adrian_site_text_files_ai_refresh_event' );
-	} elseif ( empty( $options['ai']['enabled'] ) && false !== $next_run ) {
+	} elseif ( ( empty( $options['ai']['enabled'] ) || empty( $options['ai']['data_consent'] ) ) && false !== $next_run ) {
 		wp_clear_scheduled_hook( 'adrian_site_text_files_ai_refresh_event' );
 	}
 }
