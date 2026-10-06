@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.4.2
+ * Version: 1.4.3
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.4.2';
+	private const VERSION      = '1.4.3';
 	private const DROPIN_VERSION = 2;
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
@@ -277,6 +277,13 @@ final class Adrian_Site_Cache {
 		}
 
 		if ( 'GET' !== ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) && 'HEAD' !== ( $_SERVER['REQUEST_METHOD'] ?? 'GET' ) ) {
+			return false;
+		}
+
+		$cache_control  = strtolower( (string) ( $_SERVER['HTTP_CACHE_CONTROL'] ?? '' ) );
+		$pragma         = strtolower( (string) ( $_SERVER['HTTP_PRAGMA'] ?? '' ) );
+		$requested_with = strtolower( (string) ( $_SERVER['HTTP_X_REQUESTED_WITH'] ?? '' ) );
+		if ( preg_match( '/(?:^|,)\s*(?:no-cache|no-store|max-age\s*=\s*0)\s*(?:,|$)/', $cache_control ) || false !== strpos( $pragma, 'no-cache' ) || 'xmlhttprequest' === $requested_with ) {
 			return false;
 		}
 
