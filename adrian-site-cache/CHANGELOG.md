@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.2
+
+- Eigene Drop-in-Schema-Version ergänzt; die optionale frühe Auslieferung wird nicht mehr durch eine veraltete Plugin-Versionsnummer blockiert.
+- Ein aktiviertes Drop-in wird nach einem Update wieder synchronisiert, nachdem der alte Cache sicher geleert wurde.
+- Maschinenlesbare Endpunkte werden im frühen Cachepfad ausdrücklich ausgelassen.
+- Maschinenlesbare Endpunkte werden auch im normalen Cachepfad nicht als HTML-Seiten gespeichert.
+
 ## 1.4.1
 
 - Cache-Invalidierung für neue, bearbeitete und gelöschte Kommentare ergänzt.
