@@ -16,6 +16,8 @@ optionale Endpunkte automatisch zu veröffentlichen.
 - vorbereitete, standardmäßig deaktivierte Endpunkte für `ai.txt`, `ai.json`, `tdmrep.json`, `ads.txt`, `app-ads.txt` und `opensearch.xml`
 - lokale Konfigurationsprüfung, Konflikthinweise sowie JSON-Export und -Import
 - geschützter Vorlagen-Assistent für neue oder zurückgesetzte Dateien
+- geschützter Endpunkt-Test für aktivierte Dateien mit Status-, Content-Type- und Cache-Header-Prüfung
+- Ablaufprüfung für `security.txt`, damit kein abgelaufenes Meldungsziel veröffentlicht wird
 - offizielle WordPress-AI-Client-Anbindung für einen optionalen, stündlichen `llms.txt`-Vorschlag
 - sparsames Gemini-/Freitier-Profil mit kleinerem Quellenumfang und kürzerer Ausgabe
 - Connector-Hook mit 5 Anfragen pro Minute und 50 pro Stunde je Benutzer
@@ -60,3 +62,4 @@ setzt außerdem einen funktionierenden WordPress-/Server-Cron voraus.
 3. Unter `Einstellungen → Website-Standards` die gewünschten Endpunkte prüfen und veröffentlichen.
 
 Experimentelle Formate und Werbedateien bleiben standardmäßig deaktiviert.
+
