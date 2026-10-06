@@ -169,7 +169,7 @@ Es gibt keine Abhängigkeit von Elementor, Divi, Webfonts oder einem Icon-Dienst
 
 ## Installation
 
-1. Die Datei `dylan-journal-wordpress-theme-v2.11.1-footer-alignment.zip` unter **Design → Themes → Theme hinzufügen → Theme hochladen** hochladen.
+1. Die Datei `dylan-journal-wordpress-theme-v4.3.3.zip` unter **Design → Themes → Theme hinzufügen → Theme hochladen** hochladen.
 2. Das Theme zunächst über die Vorschau kontrollieren und erst danach aktivieren.
 3. Unter **Design → Menüs** das bestehende Hauptmenü der Position **Hauptnavigation** zuweisen.
 4. Unter **Einstellungen → Lesen** die Seite `Startseite` als Startseite und `Blog` als Beitragsseite bestätigen.
