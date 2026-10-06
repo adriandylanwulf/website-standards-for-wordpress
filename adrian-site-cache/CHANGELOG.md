@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.0
+
+- Optionales Cache-Aufwärmen für die Startseite und die konfigurierte Blog-Einstiegsseite ergänzt; standardmäßig deaktiviert.
+- Aufwärmen akzeptiert ausschließlich same-origin-URLs ohne Query-Strings oder Fragmente, folgt keinen Weiterleitungen und speichert keine Antwortinhalte.
+- Manueller Aufwärmlauf in der Wartungsansicht und über `wp adrian-cache warm` ergänzt.
+- Letzten Aufwärmlauf und das Ergebnis in der Wartungsansicht ergänzt.
+
 ## 1.2.0
 
 - Wiederholte Anfragen an unveränderte Cache-Dateien nutzen ETag- und Last-Modified-Validatoren und liefern bei einem Treffer `304 Not Modified`.
@@ -85,3 +92,4 @@
 
 - Erste Version mit WP-Super-Cache-Steuerung und eigenem Datei-Cache.
 - Eigener `advanced-cache.php`-Drop-in für die spätere Ablösung.
+
