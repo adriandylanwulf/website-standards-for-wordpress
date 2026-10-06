@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0
+
+- Geschützten Button „Cache leeren“ in der WordPress-Adminleiste ergänzt.
+- Adminleisten-Aktion mit `manage_options`, eigenem Nonce und `admin-post.php` abgesichert.
+- Keine öffentliche Löschroute und keine Pfadparameter für Cache-Dateien eingeführt.
+- Plugin-Oberfläche für schmale Adminansichten weiter auf klare, stapelbare Inhalte ausgerichtet.
+
 ## 1.3.0
 
 - Optionales Cache-Aufwärmen für die Startseite und die konfigurierte Blog-Einstiegsseite ergänzt; standardmäßig deaktiviert.
@@ -92,4 +99,3 @@
 
 - Erste Version mit WP-Super-Cache-Steuerung und eigenem Datei-Cache.
 - Eigener `advanced-cache.php`-Drop-in für die spätere Ablösung.
-
