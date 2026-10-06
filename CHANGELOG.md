@@ -8,6 +8,7 @@
 - Vorschläge werden auf Dateigröße, aktive Inhalte, JSON-Struktur und erlaubte URL-Hosts geprüft.
 - Den experimentellen, standardmäßig deaktivierten Endpunkt `/.well-known/ai-safety.txt` als klar gekennzeichnete Vorlage ergänzt.
 - Die Datenfreigabe für einen einmaligen Dateivorschlag kann gespeichert werden, ohne die stündliche KI-Automatik einzuschalten.
+- Neue virtuelle Endpunkte werden nach einem Plugin-Update einmalig und nur durch einen Administrator in die Rewrite-Regeln übernommen.
 
 ## 1.5.0
 
