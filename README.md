@@ -18,6 +18,8 @@ optionale Endpunkte automatisch zu veröffentlichen.
 - geschützter Vorlagen-Assistent für neue oder zurückgesetzte Dateien
 - geschützter Endpunkt-Test für aktivierte Dateien mit Status-, Content-Type- und Cache-Header-Prüfung
 - Ablaufprüfung für `security.txt`, damit kein abgelaufenes Meldungsziel veröffentlicht wird
+- optionaler KI-Vorschlagsgenerator für ausgewählte Dateien mit lokaler Prüfung und manueller Übernahme
+- experimentelle `ai-safety.txt`-Vorlage, standardmäßig deaktiviert und ausdrücklich als Entwurf gekennzeichnet
 - offizielle WordPress-AI-Client-Anbindung für einen optionalen, stündlichen `llms.txt`-Vorschlag
 - sparsames Gemini-/Freitier-Profil mit kleinerem Quellenumfang und kürzerer Ausgabe
 - Connector-Hook mit 5 Anfragen pro Minute und 50 pro Stunde je Benutzer
@@ -44,7 +46,9 @@ aus veröffentlichten Inhalten neu aufgebaut werden. Beiträge und Seiten selbst
 nicht automatisch umgeschrieben.
 
 Eine gespeicherte Datenfreigabe ist zusätzlich erforderlich. Fehlt sie, bleiben manuelle
-und automatische KI-Anfragen blockiert. Importe übernehmen diese Freigabe niemals.
+und automatische KI-Anfragen blockiert. Sie kann für einen einzelnen, manuell geprüften
+Dateivorschlag erteilt werden, ohne die stündliche Automatik zu aktivieren. Importe
+übernehmen diese Freigabe niemals.
 
 Das optionale Gemini-/Freitier-Profil reduziert den Quellenumfang auf höchstens 20.000
 Zeichen und die Ausgabe auf 1.400 Tokens. Es aktiviert keinen Zugang, ändert keine
