@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.4.1
+
+- Cache-Invalidierung für neue, bearbeitete und gelöschte Kommentare ergänzt.
+- Statuswechsel von Kommentaren (zum Beispiel Freigabe oder Zurückweisung) leeren den öffentlichen Seiten-Cache ebenfalls sofort.
+- Kommentarrechte, Formularverarbeitung und öffentliche Kommentarfunktion bleiben unverändert.
+
 ## 1.4.0
 
 - Geschützten Button „Cache leeren“ in der WordPress-Adminleiste ergänzt.
