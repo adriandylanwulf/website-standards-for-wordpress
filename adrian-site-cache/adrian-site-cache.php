@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Adrian Site Cache
  * Description: Eigenständiger, sicherer Datei-Cache für eine persönliche WordPress-Website.
- * Version: 1.4.0
+ * Version: 1.4.1
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Author: Adrian Dylan Wulf
@@ -13,7 +13,7 @@
 defined( 'ABSPATH' ) || exit;
 
 final class Adrian_Site_Cache {
-	private const VERSION      = '1.4.0';
+	private const VERSION      = '1.4.1';
 	private const OPTION       = 'adrian_site_cache_options';
 	private const VERSION_OPTION = 'adrian_site_cache_version';
 	private const DROPIN_BACKUP_OPTION = 'adrian_site_cache_previous_dropin';
@@ -92,6 +92,10 @@ final class Adrian_Site_Cache {
 		add_action( 'deleted_post', [ $this, 'purge_after_content_change' ] );
 		add_action( 'trashed_post', [ $this, 'purge_after_content_change' ] );
 		add_action( 'untrashed_post', [ $this, 'purge_after_content_change' ] );
+		add_action( 'comment_post', [ $this, 'purge_after_content_change' ], 20 );
+		add_action( 'edit_comment', [ $this, 'purge_after_content_change' ], 20 );
+		add_action( 'delete_comment', [ $this, 'purge_after_content_change' ], 20 );
+		add_action( 'transition_comment_status', [ $this, 'purge_after_comment_status_change' ], 20, 3 );
 		add_action( 'created_term', [ $this, 'purge_after_content_change' ] );
 		add_action( 'edited_term', [ $this, 'purge_after_content_change' ] );
 		add_action( 'delete_term', [ $this, 'purge_after_content_change' ] );
@@ -570,8 +574,24 @@ PHP;
 		$this->purge( 'content' );
 	}
 
-	public function purge_after_content_change(): void {
+	public function purge_after_content_change( ...$unused ): void {
 		$this->purge( 'content' );
+	}
+
+	/**
+	 * Purge public pages when a comment becomes visible or is hidden.
+	 *
+	 * @param string     $new_status New comment status.
+	 * @param string     $old_status Previous comment status.
+	 * @param WP_Comment $comment    Changed comment.
+	 * @return void
+	 */
+	public function purge_after_comment_status_change( string $new_status, string $old_status, WP_Comment $comment ): void {
+		if ( $new_status === $old_status ) {
+			return;
+		}
+
+		$this->purge( 'comment-status' );
 	}
 
 	public function purge_after_option_change( string $option ): void {
