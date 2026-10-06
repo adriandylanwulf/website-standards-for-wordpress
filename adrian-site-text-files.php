@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Website-Textdateien für Adrian Dylan Wulf
  * Description: Verwaltet maschinenlesbare Website-Standards wie security.txt, robots.txt-Erweiterungen, LLM-Kontext und Webmetadaten.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: Adrian Dylan Wulf
  * Requires at least: 6.5
  * Requires PHP: 7.4
@@ -14,7 +14,7 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.4.0' );
+define( 'ADRIAN_SITE_TEXT_FILES_VERSION', '1.5.0' );
 define( 'ADRIAN_SITE_TEXT_FILES_OPTION', 'adrian_site_text_files_options' );
 define( 'ADRIAN_SITE_TEXT_FILES_QUERY_VAR', 'adrian_site_text_file' );
 
@@ -735,6 +735,16 @@ function adrian_site_text_files_validate_content( $key, $content ) {
 		}
 	}
 
+	if ( 'security' === $key ) {
+		if ( ! preg_match( '/^Expires:\s*(.+)$/mi', (string) $content, $matches ) ) {
+			return new WP_Error( 'security_expiry_missing', 'security.txt muss eine Expires-Angabe enthalten.' );
+		}
+		$expiry = strtotime( trim( $matches[1] ) );
+		if ( false === $expiry || $expiry <= time() ) {
+			return new WP_Error( 'security_expiry_invalid', 'security.txt muss ein zukünftiges Ablaufdatum enthalten.' );
+		}
+	}
+
 	return true;
 }
 
@@ -989,9 +999,20 @@ function adrian_site_text_files_validation() {
 		}
 
 		if ( 'security' === $key ) {
+			$expiry_match = array();
+			$expiry       = false;
+			if ( preg_match( '/^Expires:\s*(.+)$/mi', $content, $expiry_match ) ) {
+				$expiry = strtotime( trim( $expiry_match[1] ) );
+			}
 			if ( ! preg_match( '/^Contact:\s*\S+/mi', $content ) || ! preg_match( '/^Expires:\s*\S+/mi', $content ) || ! preg_match( '/^Canonical:\s*' . preg_quote( untrailingslashit( home_url( '/' ) ), '/' ) . '\/\.well-known\/security\.txt\s*$/mi', $content ) ) {
 				$status  = 'error';
 				$message = 'Contact, Expires oder Canonical fehlen beziehungsweise passen nicht zur Website.';
+			} elseif ( false === $expiry || $expiry <= time() ) {
+				$status  = 'error';
+				$message = 'Das Ablaufdatum von security.txt liegt in der Vergangenheit oder ist ungültig.';
+			} elseif ( $expiry < time() + ( 30 * DAY_IN_SECONDS ) ) {
+				$status  = 'warning';
+				$message = 'Das Ablaufdatum von security.txt liegt in weniger als 30 Tagen.';
 			}
 		}
 
@@ -1453,6 +1474,74 @@ function adrian_site_text_files_import_admin_form() {
 }
 
 /**
+ * Check one enabled public endpoint from the locked admin screen.
+ * The request is same-site only, follows no redirects and never stores the response body.
+ *
+ * @return array{type:string,message:string}|null
+ */
+function adrian_site_text_files_test_admin_form() {
+	if ( 'POST' !== strtoupper( isset( $_SERVER['REQUEST_METHOD'] ) ? (string) $_SERVER['REQUEST_METHOD'] : '' ) ) {
+		return null;
+	}
+
+	$action = isset( $_POST['adrian_site_text_files_action'] ) && is_string( $_POST['adrian_site_text_files_action'] ) ? sanitize_key( wp_unslash( $_POST['adrian_site_text_files_action'] ) ) : '';
+	if ( 'test' !== $action ) {
+		return null;
+	}
+
+	if ( ! adrian_site_text_files_can_manage() ) {
+		return array( 'type' => 'error', 'message' => 'Zugriff verweigert.' );
+	}
+
+	check_admin_referer( 'adrian_site_text_files_test' );
+	$key         = isset( $_POST['test_key'] ) && is_string( $_POST['test_key'] ) ? sanitize_key( wp_unslash( $_POST['test_key'] ) ) : '';
+	$definitions = adrian_site_text_files_definitions();
+	$options     = adrian_site_text_files_options();
+	if ( ! isset( $definitions[ $key ], $options['files'][ $key ] ) || empty( $options['files'][ $key ]['enabled'] ) ) {
+		return array( 'type' => 'error', 'message' => 'Bitte einen aktivierten Endpunkt auswählen.' );
+	}
+
+	$url       = home_url( ltrim( (string) $definitions[ $key ]['path'], '/' ) );
+	$url_parts = wp_parse_url( $url );
+	$site_host = strtolower( (string) wp_parse_url( home_url( '/' ), PHP_URL_HOST ) );
+	if ( strtolower( (string) ( $url_parts['host'] ?? '' ) ) !== $site_host ) {
+		return array( 'type' => 'error', 'message' => 'Der Endpunkt liegt nicht auf der konfigurierten Website.' );
+	}
+
+	$response = wp_safe_remote_get(
+		$url,
+		array(
+			'timeout'             => 5,
+			'redirection'         => 0,
+			'limit_response_size' => 1024 * 1024,
+			'reject_unsafe_urls'  => true,
+			'headers'             => array( 'Accept' => (string) $definitions[ $key ]['mime'] ),
+		)
+	);
+	if ( is_wp_error( $response ) ) {
+		return array( 'type' => 'error', 'message' => $definitions[ $key ]['label'] . ': Der Endpunkt konnte nicht abgerufen werden.' );
+	}
+
+	$status       = (int) wp_remote_retrieve_response_code( $response );
+	$content_type = sanitize_text_field( (string) wp_remote_retrieve_header( $response, 'content-type' ) );
+	$etag         = sanitize_text_field( (string) wp_remote_retrieve_header( $response, 'etag' ) );
+	$cache        = sanitize_text_field( (string) wp_remote_retrieve_header( $response, 'cache-control' ) );
+	if ( 200 !== $status ) {
+		return array( 'type' => 'error', 'message' => sprintf( '%s: Der Endpunkt antwortet mit HTTP %d.', $definitions[ $key ]['label'], $status ) );
+	}
+
+	$details = sprintf( '%s: HTTP 200, Content-Type %s', $definitions[ $key ]['label'], '' !== $content_type ? $content_type : 'nicht angegeben' );
+	if ( '' !== $etag ) {
+		$details .= ', ETag vorhanden';
+	}
+	if ( '' !== $cache ) {
+		$details .= ', Cache-Control vorhanden';
+	}
+
+	return array( 'type' => 'updated', 'message' => $details . '.' );
+}
+
+/**
  * Download the current configuration as a JSON backup.
  *
  * @return void
@@ -1507,6 +1596,9 @@ function adrian_site_text_files_render_admin_page() {
 	}
 	if ( ! is_array( $notice ) ) {
 		$notice = adrian_site_text_files_import_admin_form();
+	}
+	if ( ! is_array( $notice ) ) {
+		$notice = adrian_site_text_files_test_admin_form();
 	}
 	if ( ! is_array( $notice ) ) {
 		$notice = adrian_site_text_files_save_admin_form();
@@ -1610,6 +1702,28 @@ function adrian_site_text_files_render_admin_page() {
 			</form>
 		</section>
 
+		<section class="adrian-stf-card adrian-stf-card--assistant" aria-labelledby="adrian-stf-test-title">
+			<h2 id="adrian-stf-test-title">Öffentliche Endpunkte prüfen</h2>
+			<p>Ruft einen aktivierten Endpunkt einmal über die eigene Website ab. Es werden nur Status, Content-Type und vorhandene Cache-Header ausgewertet; der Inhalt wird nicht gespeichert.</p>
+			<form method="post">
+				<?php wp_nonce_field( 'adrian_site_text_files_test' ); ?>
+				<input type="hidden" name="adrian_site_text_files_action" value="test">
+				<div class="adrian-stf-grid">
+					<div class="adrian-stf-field">
+						<label for="adrian-stf-test-key">Endpunkt</label>
+						<select id="adrian-stf-test-key" name="test_key">
+							<?php foreach ( $definitions as $test_key => $test_definition ) : ?>
+								<?php if ( ! empty( $options['files'][ $test_key ]['enabled'] ) ) : ?><option value="<?php echo esc_attr( $test_key ); ?>"><?php echo esc_html( $test_definition['label'] ); ?></option><?php endif; ?>
+							<?php endforeach; ?>
+						</select>
+					</div>
+					<div class="adrian-stf-field adrian-stf-actions">
+						<?php submit_button( 'Endpunkt prüfen', 'secondary', 'submit', false ); ?>
+					</div>
+				</div>
+			</form>
+		</section>
+
 		<form method="post">
 			<?php wp_nonce_field( 'adrian_site_text_files_save' ); ?>
 			<input type="hidden" name="adrian_site_text_files_action" value="save">
@@ -1664,3 +1778,4 @@ function adrian_site_text_files_render_admin_page() {
 	</div>
 	<?php
 }
+
