@@ -88,9 +88,10 @@ $notes_query = new WP_Query(
 	<div class="dj-width">
 		<div class="dj-section__head dj-section__head--v2">
 			<div>
+				<p class="dj-eyebrow"><?php esc_html_e( 'Aus dem Blog', 'dylan-journal' ); ?></p>
 				<h2 id="latest-notes-title" class="dj-section-title"><?php esc_html_e( 'Neue Beiträge', 'dylan-journal' ); ?></h2>
 			</div>
-				<p class="dj-section__hint"><?php esc_html_e( 'Neue Notizen, sobald ich etwas ausprobiert oder genauer nachgesehen habe.', 'dylan-journal' ); ?></p>
+			<p class="dj-section__hint"><?php esc_html_e( 'Technik, Sicherheit, Hosting und Beobachtungen aus meinem Alltag.', 'dylan-journal' ); ?></p>
 		</div>
 
 		<?php if ( $notes_query->have_posts() ) : ?>
@@ -144,8 +145,9 @@ $notes_query = new WP_Query(
 <section class="dj-section dj-section--soft" aria-labelledby="explore-title">
 	<div class="dj-width dj-explore">
 		<div>
-			<h2 id="explore-title" class="dj-section-title"><?php esc_html_e( 'Auf der Seite gibt es drei Bereiche.', 'dylan-journal' ); ?></h2>
-			<p class="dj-explore__intro"><?php esc_html_e( 'Der Blog ist für Notizen, die Fotosammlung für unterwegs und das Formular für direkte Nachrichten.', 'dylan-journal' ); ?></p>
+			<p class="dj-eyebrow"><?php esc_html_e( 'Weiterstöbern', 'dylan-journal' ); ?></p>
+			<h2 id="explore-title" class="dj-section-title"><?php esc_html_e( 'Worauf hast du Lust?', 'dylan-journal' ); ?></h2>
+			<p class="dj-explore__intro"><?php esc_html_e( 'Im Blog stehen meine Notizen, in den Fotos bleiben Wege und Augenblicke hängen. Wenn du mir direkt etwas sagen möchtest, findest du dort auch das Kontaktformular.', 'dylan-journal' ); ?></p>
 		</div>
 		<div class="dj-explore__links">
 			<a href="<?php echo esc_url( $blog_url ); ?>"><span><?php esc_html_e( 'Blog', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Was ich ausprobiere', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Webhosting, E-Mail, Sicherheit und andere Dinge, die ich nicht nur im Kopf behalten möchte.', 'dylan-journal' ); ?></small></a>
