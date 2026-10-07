@@ -1,4 +1,12 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.9.0
+# Adrian Dylan Wulf – persönliches Website-Template 4.10.0
+
+## 4.10.0
+
+- den Einstieg der Startseite auf großen Bildschirmen oben ausgerichtet, damit Text und Bild ruhiger zusammenstehen
+- die Bildbreite begrenzt, damit der Blogbereich schneller in den sichtbaren Seitenfluss rückt
+- den persönlichen Einstieg mit einer zurückhaltenden blauen Linie akzentuiert
+- die beiden Einstiegslinks semantisch als Navigation ausgezeichnet
+- Inhalte, URLs, SEO-Ausgaben, Kommentare und mobile Darstellung beibehalten
 
 ## 4.9.0
 
