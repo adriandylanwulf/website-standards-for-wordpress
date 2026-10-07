@@ -3,7 +3,7 @@ Theme Name: Adrian Dylan Wulf – persönliche Website
 Theme URI: https://www.adriandylanwulf.de/
 Author: Adrian Dylan Wulf
 Description: Ein schlankes, persönliches WordPress-Theme für Notizen, Fotos und Beiträge.
-Version: 4.11.0
+Version: 4.12.0
 Requires at least: 7.1
 Requires PHP: 8.5
 Text Domain: dylan-journal
@@ -2819,5 +2819,103 @@ blockquote {
       "title"
       "description";
     gap: 0.2rem;
+  }
+}
+
+/* 4.12: give the footer a clearer, tighter finish. */
+.dj-footer {
+  background: var(--dj-surface);
+}
+
+.dj-footer__inner {
+  padding-block: clamp(2.2rem, 4vw, 3.5rem) 0.9rem;
+}
+
+.dj-footer__masthead {
+  gap: 1.25rem 2.5rem;
+  align-items: end;
+  padding-bottom: 1.3rem;
+  border-bottom: 1px solid var(--dj-line);
+}
+
+.dj-footer__name {
+  font-size: clamp(1.45rem, 2.3vw, 1.85rem);
+}
+
+.dj-footer__intro {
+  max-width: 34rem;
+  margin-top: 0.35rem;
+}
+
+.dj-footer__actions {
+  align-items: end;
+  gap: 0.5rem 1.4rem;
+}
+
+.dj-footer__contact {
+  min-height: 1.9rem;
+}
+
+.dj-footer__contact::after {
+  content: "↗";
+  font-size: 0.9em;
+  transition: transform 0.18s ease;
+}
+
+.dj-footer__contact:hover::after {
+  transform: translate(0.12rem, -0.12rem);
+}
+
+.dj-footer__body {
+  grid-template-columns: minmax(0, 1.3fr) minmax(12rem, 0.7fr);
+  gap: 1.1rem 4rem;
+  padding-block: 1.15rem 1rem;
+}
+
+.dj-footer__navigation--legal {
+  justify-self: end;
+  min-width: 12rem;
+}
+
+.dj-footer__label {
+  margin-bottom: 0.35rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dj-footer__links {
+  gap: 0.2rem 1rem;
+}
+
+.dj-footer__links a,
+.dj-footer__links button {
+  min-height: 1.65rem;
+}
+
+.dj-footer__base {
+  align-items: baseline;
+  padding-top: 0.75rem;
+}
+
+@media (max-width: 680px) {
+  .dj-footer__inner {
+    padding-block: 2.25rem 0.85rem;
+  }
+
+  .dj-footer__masthead {
+    gap: 1rem;
+    align-items: start;
+  }
+
+  .dj-footer__body {
+    gap: 1rem;
+    padding-block: 1rem 0.85rem;
+  }
+
+  .dj-footer__navigation--legal {
+    justify-self: start;
+    min-width: 0;
+    padding-top: 0.95rem;
   }
 }
