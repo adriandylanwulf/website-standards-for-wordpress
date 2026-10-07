@@ -1,4 +1,12 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.11.0
+# Adrian Dylan Wulf – persönliches Website-Template 4.12.0
+
+## 4.12.0
+
+- den Footer als kompakteren, klar gegliederten Abschluss der Website überarbeitet
+- den Namen, die direkten Links und die Navigation stärker als zusammengehörigen Bereich ausgerichtet
+- die rechtlichen Hinweise ruhiger in die Footer-Struktur eingeordnet
+- Abstände, Trennlinien und Linkzustände für Desktop und Mobil fein abgestimmt
+- die vorhandenen Links, Inhalte, Kommentare, SEO-Ausgaben und Datenschutzfunktionen beibehalten
 
 ## 4.11.0
 
