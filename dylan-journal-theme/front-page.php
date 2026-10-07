@@ -56,10 +56,10 @@ $notes_query = new WP_Query(
 			<p class="dj-home-intro__hello"><?php esc_html_e( 'Hallo, ich bin Adrian.', 'dylan-journal' ); ?></p>
 			<h1 id="home-intro-title"><?php esc_html_e( 'Ich schreibe auf, was mich beschäftigt.', 'dylan-journal' ); ?></h1>
 			<p class="dj-intro__copy"><?php esc_html_e( 'Auf dieser Seite sammle ich Notizen aus dem Alltag, Fotos von unterwegs und Dinge, die ich selbst ausprobiert habe.', 'dylan-journal' ); ?></p>
-			<div class="dj-home-intro__links">
+			<nav class="dj-home-intro__links" aria-label="<?php esc_attr_e( 'Einstieg', 'dylan-journal' ); ?>">
 				<a class="dj-quiet-link" href="<?php echo esc_url( $about_url ); ?>"><?php esc_html_e( 'Über mich', 'dylan-journal' ); ?></a>
 				<a class="dj-quiet-link dj-quiet-link--subtle" href="<?php echo esc_url( $blog_url ); ?>"><?php esc_html_e( 'Blog lesen', 'dylan-journal' ); ?></a>
-			</div>
+			</nav>
 		</div>
 		<?php if ( $home_photo ) : ?>
 			<figure class="dj-home-intro__image<?php echo $home_is_ai ? ' dj-media-frame--ai' : ''; ?>">
