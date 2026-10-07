@@ -142,29 +142,28 @@ $notes_query = new WP_Query(
 	</div>
 </section>
 
-<section class="dj-section dj-section--soft" aria-labelledby="explore-title">
-	<div class="dj-width dj-explore">
-		<div>
-			<p class="dj-eyebrow"><?php esc_html_e( 'Weiterstöbern', 'dylan-journal' ); ?></p>
-			<h2 id="explore-title" class="dj-section-title"><?php esc_html_e( 'Worauf hast du Lust?', 'dylan-journal' ); ?></h2>
-			<p class="dj-explore__intro"><?php esc_html_e( 'Im Blog stehen meine Notizen, in den Fotos bleiben Wege und Augenblicke hängen. Wenn du mir direkt etwas sagen möchtest, findest du dort auch das Kontaktformular.', 'dylan-journal' ); ?></p>
+<section class="dj-section dj-section--discover" aria-labelledby="explore-title">
+	<div class="dj-width dj-discover">
+		<div class="dj-discover__intro">
+			<p class="dj-eyebrow"><?php esc_html_e( 'Zum Weiterstöbern', 'dylan-journal' ); ?></p>
+			<h2 id="explore-title" class="dj-section-title"><?php esc_html_e( 'Was ich sonst noch sammle', 'dylan-journal' ); ?></h2>
+			<p class="dj-explore__intro"><?php esc_html_e( 'Im Blog landen Dinge, die ich ausprobiert habe. In den Fotos bleiben Orte, Wege und Augenblicke aus meinem Alltag hängen.', 'dylan-journal' ); ?></p>
 		</div>
-		<div class="dj-explore__links">
-			<a href="<?php echo esc_url( $blog_url ); ?>"><span><?php esc_html_e( 'Blog', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Was ich ausprobiere', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Webhosting, E-Mail, Sicherheit und andere Dinge, die ich nicht nur im Kopf behalten möchte.', 'dylan-journal' ); ?></small></a>
-			<a href="<?php echo esc_url( $photos_url ); ?>"><span><?php esc_html_e( 'Fotos', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Was unterwegs hängen bleibt', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Eigene Bilder und kleine Ausschnitte von den Wegen dazwischen.', 'dylan-journal' ); ?></small></a>
-			<a href="<?php echo esc_url( $contact_url ); ?>"><span><?php esc_html_e( 'Kontakt', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Wenn du mir schreiben möchtest', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Fragen, Hinweise oder eine Rückmeldung zu einem Beitrag sind willkommen.', 'dylan-journal' ); ?></small></a>
-		</div>
-	</div>
-</section>
-
-<section class="dj-section dj-section--contact" aria-labelledby="contact-title">
-	<div class="dj-width dj-home-footer">
-		<div>
-			<h2 id="contact-title" class="dj-section-title"><?php esc_html_e( 'Wenn du mir schreiben möchtest', 'dylan-journal' ); ?></h2>
-		</div>
-		<div>
-			<p><?php esc_html_e( 'Wenn du etwas zu einem Beitrag sagen möchtest oder eine Frage hast, schreib mir über das Formular.', 'dylan-journal' ); ?></p>
-			<a class="dj-quiet-link" href="<?php echo esc_url( $contact_url ); ?>"><?php esc_html_e( 'Zum Kontaktformular', 'dylan-journal' ); ?></a>
+		<div class="dj-discover__content">
+			<nav class="dj-explore__links" aria-label="<?php esc_attr_e( 'Weitere Bereiche', 'dylan-journal' ); ?>">
+				<a href="<?php echo esc_url( $blog_url ); ?>"><span><?php esc_html_e( 'Blog', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Gedanken, Tests und Notizen', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Webhosting, E-Mail, Sicherheit und andere Dinge, die ich nicht nur im Kopf behalten möchte.', 'dylan-journal' ); ?></small></a>
+				<a href="<?php echo esc_url( $photos_url ); ?>"><span><?php esc_html_e( 'Fotos', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Bilder von unterwegs', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Eigene Bilder und kleine Ausschnitte von den Wegen dazwischen.', 'dylan-journal' ); ?></small></a>
+			</nav>
+			<div class="dj-home-contact" aria-labelledby="contact-title">
+				<div>
+					<p class="dj-eyebrow"><?php esc_html_e( 'Direkter Kontakt', 'dylan-journal' ); ?></p>
+					<h2 id="contact-title"><?php esc_html_e( 'Du möchtest mir schreiben?', 'dylan-journal' ); ?></h2>
+				</div>
+				<div>
+					<p><?php esc_html_e( 'Für eine Frage zu einem Beitrag, eine Rückmeldung oder einfach ein kurzes Hallo gibt es das Kontaktformular.', 'dylan-journal' ); ?></p>
+					<a class="dj-quiet-link" href="<?php echo esc_url( $contact_url ); ?>"><?php esc_html_e( 'Kontaktformular öffnen', 'dylan-journal' ); ?></a>
+				</div>
+			</div>
 		</div>
 	</div>
 </section>
