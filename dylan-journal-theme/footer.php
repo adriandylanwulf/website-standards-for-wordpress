@@ -26,14 +26,14 @@ if ( ! $privacy_url ) {
 				<a class="dj-footer__signature" href="<?php echo esc_url( home_url( '/' ) ); ?>" rel="home">
 					<span class="dj-footer__name"><?php bloginfo( 'name' ); ?></span>
 				</a>
-				<p class="dj-footer__intro"><?php esc_html_e( 'Notizen, Fotos und Dinge, die unterwegs hängen bleiben.', 'dylan-journal' ); ?></p>
+				<p class="dj-footer__intro"><?php esc_html_e( 'Notizen, Fotos und ein paar Erfahrungen aus meinem Alltag.', 'dylan-journal' ); ?></p>
 			</div>
 			<div class="dj-footer__actions">
 				<?php if ( $photos_page && 'publish' === $photos_page->post_status ) : ?>
-					<a class="dj-footer__contact" href="<?php echo esc_url( get_permalink( $photos_page ) ); ?>"><?php esc_html_e( 'Zu den Fotos', 'dylan-journal' ); ?> <span aria-hidden="true">↗</span></a>
+					<a class="dj-footer__contact" href="<?php echo esc_url( get_permalink( $photos_page ) ); ?>"><?php esc_html_e( 'Zu den Fotos', 'dylan-journal' ); ?></a>
 				<?php endif; ?>
 				<?php if ( $contact_page && 'publish' === $contact_page->post_status ) : ?>
-					<a class="dj-footer__contact" href="<?php echo esc_url( get_permalink( $contact_page ) ); ?>"><?php esc_html_e( 'Schreib mir', 'dylan-journal' ); ?> <span aria-hidden="true">↗</span></a>
+					<a class="dj-footer__contact" href="<?php echo esc_url( get_permalink( $contact_page ) ); ?>"><?php esc_html_e( 'Schreib mir', 'dylan-journal' ); ?></a>
 				<?php endif; ?>
 			</div>
 		</div>
