@@ -3,7 +3,7 @@ Theme Name: Adrian Dylan Wulf – persönliche Website
 Theme URI: https://www.adriandylanwulf.de/
 Author: Adrian Dylan Wulf
 Description: Ein schlankes, persönliches WordPress-Theme für Notizen, Fotos und Beiträge.
-Version: 4.9.0
+Version: 4.10.0
 Requires at least: 7.1
 Requires PHP: 8.5
 Text Domain: dylan-journal
@@ -2639,5 +2639,46 @@ blockquote {
 
   .dj-explore {
     gap: 2rem;
+  }
+}
+
+/* 4.10: make the front-page opening feel intentional instead of oversized. */
+@media (min-width: 821px) {
+  .dj-home-intro {
+    align-items: start;
+  }
+
+  .dj-home-intro__copy {
+    padding-top: clamp(1.25rem, 3vw, 3rem);
+  }
+
+  .dj-home-intro__image {
+    justify-self: end;
+    max-width: 46rem;
+  }
+}
+
+.dj-home-intro__hello {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.dj-home-intro__hello::before {
+  width: 2.4rem;
+  height: 2px;
+  background: var(--dj-blue);
+  content: "";
+}
+
+.dj-home-intro__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 1.5rem;
+}
+
+@media (max-width: 820px) {
+  .dj-home-intro__copy {
+    padding-top: 0;
   }
 }
