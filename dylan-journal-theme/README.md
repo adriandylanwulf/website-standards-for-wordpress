@@ -1,6 +1,88 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.3.4
+# Adrian Dylan Wulf – persönliches Website-Template 4.6.0
+
+## 4.6.0
+
+- Sprache auf Startseite, Blog, Über-mich-Seite, Footer und 404-Seite direkter und weniger schablonenhaft formuliert.
+- Abschnittslabels, Nummerierungen, Pfeil-CTAs und vollflächige Farbflächen zurückgenommen.
+- Drei Hauptbereiche als einfache redaktionelle Liste statt als gleichförmige Karten gestaltet.
+- Verwandte Beiträge und Bloglisten ruhiger und weniger nach Landingpage aufgebaut.
+
+## Was Version 4.5.0 verbessert
+
+- die Startseite sprachlich persönlicher und weniger nach allgemeiner Marketing- oder SEO-Sprache formuliert
+- die blauen Trennlinien, Schatten und gleichförmigen Karten zurückgenommen, damit Beiträge stärker wie eine persönliche redaktionelle Sammlung wirken
+- „Weitere Beiträge“ als ruhige, bildgestützte Liste statt als geschlossene Karten dargestellt
+- einen eigenen Tablet-Bereich für 821 bis 1100 Pixel ergänzt und die mobile Umschaltung auf 820 Pixel angehoben
+- die Farbpalette leicht wärmer und weniger technisch gestaltet, ohne Kontrast, Fokuszustände oder KI-Badges zu verlieren
+- bestehende URLs, Kommentare, SEO-Ausgaben, Bildoptimierung und die Kennzeichnung „KI-generiert“ beibehalten
+
+## Was Version 4.4.4 verbessert
+
+- „Weitere Beiträge“ stehen jetzt direkt nach dem Artikel und vor dem Kommentarbereich. Dadurch bleibt der redaktionelle Lesefluss erhalten und die Empfehlungen wirken nicht wie ein nachträglich angehängter Block.
+- Seitenüberschriften und Einzelbeiträge beginnen etwas kompakter. Das reduziert unnötigen Leerraum, ohne die ruhige Gestaltung oder die Lesbarkeit auf kleinen Bildschirmen zu verlieren.
+- Die bestehende Kartenansicht, die KI-Kennzeichnung, die Kommentare, die mobile Navigation und die vorhandenen URLs bleiben erhalten.
+
+## Was Version 4.4.3 verbessert
+
+- „Weitere Beiträge“ unter den Kommentaren werden als ruhige, klar erkennbare Karten dargestellt.
+- Vorhandene Beitragsbilder werden als dezente Vorschaubilder genutzt und bleiben mobil sauber responsiv.
+- KI-generierte Vorschaubilder verwenden weiterhin das kompakte Badge „KI-generiert“ direkt im Bild.
+- Die neue Darstellung ergänzt einen eindeutigen Link „Beitrag lesen“, ohne URLs oder Inhalte zu verändern.
+- Bewegungsreduzierung wird respektiert; bei entsprechender Systemeinstellung entfällt das Anheben der Karten.
+
+## Was Version 4.4.2 verbessert
+
+- Das Badge „KI-generiert“ wird jetzt auch am hervorgehobenen Beitrag auf der Startseite angezeigt.
+- Der Bildrahmen ist für das Badge auch in dieser Beitragsansicht sauber positioniert.
+
+## Was Version 4.4.1 verbessert
+
+- Das KI-Badge besteht jetzt bewusst nur aus dem Text „KI-generiert“ und sitzt kompakt unten rechts im Bild.
+- Die Beschriftung ersetzt bei markierten KI-Bildern die bisherige KI-Hinweiszeile unter dem Bild.
+
+## Was Version 4.4.0 verbessert
+
+- KI-generierte Bilder erhalten ein kleines, zugängliches Badge direkt unten rechts im Bild.
+- Zusätzliche KI-Hinweiszeilen unter diesen Bildern entfallen; normale redaktionelle Bildtitel und Beschreibungen bleiben erhalten.
+- Bildübergänge und Medienrahmen bleiben bewusst dezent und respektieren reduzierte Bewegung.
+
+## Was Version 4.3.9 verbessert
+
+- kompakte Themen-Navigation direkt auf der Blog-Übersicht ergänzt
+- Kategorien als schlanke Textlinks statt als zusätzliche Karten oder Bilder ausgegeben
+- die bestehende leichte Listenansicht, URLs, Inhalte und externe Verbindungen unverändert gelassen
+- die Navigation mit sichtbarem Fokus, `aria-label` und mobil umbrechendem Layout umgesetzt
+
+## Was Version 4.3.8 verbessert
+
+- die bevorzugte Website-Bezeichnung in den SEO- und Social-Metadaten eindeutig auf „Adrian Dylan Wulf“ gesetzt
+- `WebSite`-Strukturdaten um legitime Alternativen ergänzt, damit Google den Website-Namen statt der Domain erkennen kann
+- die sichtbaren Inhalte, URLs, Überschriften, Bilder, Formulare und Plugins unverändert gelassen
+- keine externe Schrift, kein zusätzliches JavaScript und keine neue Verbindung eingeführt
+
+## Was Version 4.3.7 verbessert
+
+- die wichtigsten Beitragstitel für Suchmaschinen und Social-Previews gekürzt und präzisiert, damit sie auf mobilen und Desktop-Suchergebnisseiten seltener abgeschnitten werden
+- die neueren Beiträge zu Segway F3, Freifunk und WhatsApp in die zentrale Titelsteuerung aufgenommen
+- Überschriften, Inhalte, URLs, Bilder, Formulare, Plugins und externe Schriften unverändert gelassen
+- keine zusätzliche CSS-Schicht oder externe Verbindung eingeführt
+
+## Was Version 4.3.6 verbessert
+
+- Seitenkopf und Inhaltsabstände auf Unterseiten etwas verdichtet, damit Kontakt-, Online-, Über-mich- und Fotoseiten schneller zum eigentlichen Inhalt führen
+- die Über-mich-Spalten auf großen Bildschirmen ausgewogener ausgerichtet
+- lange externe Profiladressen brechen auf kleinen Bildschirmen sauber um
+- das Kontaktformular erhält eine kompaktere Anordnung direkt unter der Seitenüberschrift
+- asynchrones Bild-Decoding für große Beitrags- und Portraitbilder ergänzt, ohne Inhalte, URLs oder externe Schriften zu verändern
+- keine neuen Plugins und keine zusätzliche Customizer-CSS-Schicht eingeführt
 
 Ein schlankes WordPress-Theme für die persönliche Website von Adrian Dylan Wulf. Es erhält die bestehenden Seiten, Beiträge, Kategorien und URLs; es ändert keine URLs und benötigt keine zusätzlichen Design- oder SEO-Plugins.
+
+## Was Version 4.3.5 verbessert
+
+- leere Kategorie-, Schlagwort- und Taxonomie-Archive bleiben erreichbar, werden aber mit `noindex, follow` aus Suchmaschinen-Ergebnissen herausgehalten
+- dadurch entsteht kein dünner, leerer Suchtreffer für ungenutzte Standardkategorien wie „Allgemein“
+- keine URLs, Inhalte, externen Schriften oder zusätzlichen Plugins verändert
 
 ## Was Version 4.3.4 verbessert
 
