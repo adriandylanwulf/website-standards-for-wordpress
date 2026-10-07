@@ -23,6 +23,7 @@ $photo_items = $photos_page ? get_children(
 	)
 ) : array();
 $home_photo = $photo_items ? reset( $photo_items ) : null;
+$home_is_ai  = $home_photo && function_exists( 'dylan_journal_is_ai_image' ) ? dylan_journal_is_ai_image( $home_photo->ID ) : false;
 $home_image  = $home_photo ? wp_get_attachment_image_src( $home_photo->ID, 'large' ) : false;
 $upload_dir  = wp_upload_dir();
 $home_webp   = $home_image ? preg_replace( '/\.(jpe?g|png)$/i', '.webp', $home_image[0] ) : '';
@@ -52,17 +53,17 @@ $notes_query = new WP_Query(
 <section class="dj-home-stage" aria-labelledby="home-intro-title">
 	<div class="dj-width dj-home-intro">
 		<div class="dj-home-intro__copy">
-			<p class="dj-eyebrow"><?php esc_html_e( 'Ein paar Dinge von mir', 'dylan-journal' ); ?></p>
-			<h1 id="home-intro-title"><?php esc_html_e( 'Was ich gerade mache, sehe und ausprobiere.', 'dylan-journal' ); ?></h1>
-			<p class="dj-intro__copy"><?php esc_html_e( 'Ich bin Adrian. Hier sammle ich Beiträge über Technik und Webhosting, Fotos von unterwegs und Gedanken, die ich nicht gleich wieder vergessen möchte.', 'dylan-journal' ); ?></p>
+			<p class="dj-home-intro__hello"><?php esc_html_e( 'Hallo, ich bin Adrian.', 'dylan-journal' ); ?></p>
+			<h1 id="home-intro-title"><?php esc_html_e( 'Ich schreibe auf, was mich beschäftigt.', 'dylan-journal' ); ?></h1>
+			<p class="dj-intro__copy"><?php esc_html_e( 'Auf dieser Seite sammle ich Notizen aus dem Alltag, Fotos von unterwegs und Dinge, die ich selbst ausprobiert habe.', 'dylan-journal' ); ?></p>
 			<div class="dj-home-intro__links">
-				<a class="dj-quiet-link" href="<?php echo esc_url( $about_url ); ?>"><?php esc_html_e( 'Kurz zu mir', 'dylan-journal' ); ?></a>
-				<a class="dj-quiet-link dj-quiet-link--subtle" href="<?php echo esc_url( $blog_url ); ?>"><?php esc_html_e( 'Beiträge ansehen', 'dylan-journal' ); ?></a>
+				<a class="dj-quiet-link" href="<?php echo esc_url( $about_url ); ?>"><?php esc_html_e( 'Über mich', 'dylan-journal' ); ?></a>
+				<a class="dj-quiet-link dj-quiet-link--subtle" href="<?php echo esc_url( $blog_url ); ?>"><?php esc_html_e( 'Blog lesen', 'dylan-journal' ); ?></a>
 			</div>
 		</div>
 		<?php if ( $home_photo ) : ?>
-			<figure class="dj-home-intro__image">
-				<a href="<?php echo esc_url( $photos_url ); ?>" aria-label="<?php esc_attr_e( 'Zur Fotoseite', 'dylan-journal' ); ?>">
+			<figure class="dj-home-intro__image<?php echo $home_is_ai ? ' dj-media-frame--ai' : ''; ?>">
+				<a class="dj-media-frame__visual" href="<?php echo esc_url( $photos_url ); ?>" aria-label="<?php esc_attr_e( 'Zur Fotoseite', 'dylan-journal' ); ?>">
 					<?php if ( $home_webp && $home_webp_path && file_exists( $home_webp_path ) ) : ?>
 						<picture>
 							<source type="image/webp" srcset="<?php echo esc_attr( implode( ', ', $home_webp_srcset ) ); ?>" sizes="<?php echo esc_attr( $home_image_sizes ); ?>">
@@ -71,6 +72,7 @@ $notes_query = new WP_Query(
 					<?php else : ?>
 						<?php echo wp_get_attachment_image( $home_photo->ID, 'large', false, array( 'loading' => 'eager', 'fetchpriority' => 'high', 'decoding' => 'async', 'sizes' => $home_image_sizes ) ); ?>
 					<?php endif; ?>
+					<?php if ( $home_is_ai ) : ?><?php echo wp_kses( dylan_journal_ai_badge(), array( 'span' => array( 'class' => true, 'aria-label' => true, 'aria-hidden' => true ) ) ); ?><?php endif; ?>
 				</a>
 				<figcaption><?php esc_html_e( 'Aus meiner Fotosammlung', 'dylan-journal' ); ?> <a href="<?php echo esc_url( $photos_url ); ?>"><?php esc_html_e( 'Alle Fotos', 'dylan-journal' ); ?></a></figcaption>
 			</figure>
@@ -86,23 +88,32 @@ $notes_query = new WP_Query(
 	<div class="dj-width">
 		<div class="dj-section__head dj-section__head--v2">
 			<div>
-			<p class="dj-eyebrow"><?php esc_html_e( 'Aus dem Blog', 'dylan-journal' ); ?></p>
-				<h2 id="latest-notes-title" class="dj-section-title"><?php esc_html_e( 'Zuletzt aufgeschrieben', 'dylan-journal' ); ?></h2>
+				<h2 id="latest-notes-title" class="dj-section-title"><?php esc_html_e( 'Neue Beiträge', 'dylan-journal' ); ?></h2>
 			</div>
-				<p class="dj-section__hint"><?php esc_html_e( 'Gedanken, Erfahrungen und Erklärungen aus meinem Alltag – ohne großes Drumherum.', 'dylan-journal' ); ?></p>
+				<p class="dj-section__hint"><?php esc_html_e( 'Neue Notizen, sobald ich etwas ausprobiert oder genauer nachgesehen habe.', 'dylan-journal' ); ?></p>
 		</div>
 
 		<?php if ( $notes_query->have_posts() ) : ?>
 			<?php $notes_query->the_post(); ?>
 			<article class="dj-featured-note">
 				<div class="dj-featured-note__body">
-					<p class="dj-featured-note__meta"><?php echo wp_kses_post( dylan_journal_primary_category_link() ); ?><span aria-hidden="true"> · </span><time datetime="<?php echo esc_attr( get_the_date( DATE_W3C ) ); ?>"><?php echo esc_html( get_the_date( 'd. M Y' ) ); ?></time><span aria-hidden="true"> · </span><?php echo esc_html( dylan_journal_reading_time() ); ?></p>
+					<p class="dj-featured-note__meta"><?php echo wp_kses_post( dylan_journal_primary_category_link() ); ?><span aria-hidden="true"> · </span><time datetime="<?php echo esc_attr( get_the_date( DATE_W3C ) ); ?>"><?php echo esc_html( get_the_date( 'd. M Y' ) ); ?></time></p>
 					<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
 					<p><?php echo esc_html( dylan_journal_excerpt() ); ?></p>
-					<a class="dj-quiet-link" href="<?php the_permalink(); ?>"><?php esc_html_e( 'Beitrag lesen', 'dylan-journal' ); ?></a>
+				<a class="dj-quiet-link" href="<?php the_permalink(); ?>"><?php esc_html_e( 'Beitrag lesen', 'dylan-journal' ); ?></a>
 				</div>
 				<?php if ( has_post_thumbnail() ) : ?>
-					<figure class="dj-featured-note__image"><?php the_post_thumbnail( 'large', array( 'loading' => 'lazy', 'decoding' => 'async', 'sizes' => '(max-width: 720px) calc(100vw - 88px), 440px' ) ); ?></figure>
+					<?php
+					$featured_image_id = get_post_thumbnail_id();
+					$featured_caption  = get_the_post_thumbnail_caption();
+					$featured_is_ai    = function_exists( 'dylan_journal_is_ai_image' ) && dylan_journal_is_ai_image( $featured_image_id, $featured_caption );
+					?>
+					<figure class="dj-featured-note__image<?php echo $featured_is_ai ? ' dj-media-frame--ai' : ''; ?>">
+						<span class="dj-media-frame__visual">
+							<?php the_post_thumbnail( 'large', array( 'loading' => 'lazy', 'decoding' => 'async', 'sizes' => '(max-width: 720px) calc(100vw - 88px), 440px' ) ); ?>
+							<?php if ( $featured_is_ai ) : ?><?php echo wp_kses( dylan_journal_ai_badge(), array( 'span' => array( 'class' => true, 'aria-label' => true, 'aria-hidden' => true ) ) ); ?><?php endif; ?>
+						</span>
+					</figure>
 				<?php endif; ?>
 			</article>
 
@@ -133,14 +144,13 @@ $notes_query = new WP_Query(
 <section class="dj-section dj-section--soft" aria-labelledby="explore-title">
 	<div class="dj-width dj-explore">
 		<div>
-			<p class="dj-eyebrow"><?php esc_html_e( 'Hier entlang', 'dylan-journal' ); ?></p>
-			<h2 id="explore-title" class="dj-section-title"><?php esc_html_e( 'Was du hier findest', 'dylan-journal' ); ?></h2>
-			<p class="dj-explore__intro"><?php esc_html_e( 'Keine Sammlung von Angeboten, sondern ein persönlicher Ort für Dinge, die mir wichtig sind.', 'dylan-journal' ); ?></p>
+			<h2 id="explore-title" class="dj-section-title"><?php esc_html_e( 'Auf der Seite gibt es drei Bereiche.', 'dylan-journal' ); ?></h2>
+			<p class="dj-explore__intro"><?php esc_html_e( 'Der Blog ist für Notizen, die Fotosammlung für unterwegs und das Formular für direkte Nachrichten.', 'dylan-journal' ); ?></p>
 		</div>
 		<div class="dj-explore__links">
-			<a href="<?php echo esc_url( $blog_url ); ?>"><span><?php esc_html_e( '01 · Blog', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Was ich gerade ausprobiere', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Webhosting, E-Mail und Sicherheit so erklärt, wie ich sie selbst gern gefunden hätte.', 'dylan-journal' ); ?></small></a>
-			<a href="<?php echo esc_url( $photos_url ); ?>"><span><?php esc_html_e( '02 · Fotos', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Unterwegs festgehalten', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Eigene Bilder und kleine Eindrücke, sobald sie hier ihren Platz finden.', 'dylan-journal' ); ?></small></a>
-			<a href="<?php echo esc_url( $contact_url ); ?>"><span><?php esc_html_e( '03 · Kontakt', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Schreib mir gern', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Für Fragen, Rückmeldungen oder einfach einen Gedanken zum Weiterdenken.', 'dylan-journal' ); ?></small></a>
+			<a href="<?php echo esc_url( $blog_url ); ?>"><span><?php esc_html_e( 'Blog', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Was ich ausprobiere', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Webhosting, E-Mail, Sicherheit und andere Dinge, die ich nicht nur im Kopf behalten möchte.', 'dylan-journal' ); ?></small></a>
+			<a href="<?php echo esc_url( $photos_url ); ?>"><span><?php esc_html_e( 'Fotos', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Was unterwegs hängen bleibt', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Eigene Bilder und kleine Ausschnitte von den Wegen dazwischen.', 'dylan-journal' ); ?></small></a>
+			<a href="<?php echo esc_url( $contact_url ); ?>"><span><?php esc_html_e( 'Kontakt', 'dylan-journal' ); ?></span><strong><?php esc_html_e( 'Wenn du mir schreiben möchtest', 'dylan-journal' ); ?></strong><small><?php esc_html_e( 'Fragen, Hinweise oder eine Rückmeldung zu einem Beitrag sind willkommen.', 'dylan-journal' ); ?></small></a>
 		</div>
 	</div>
 </section>
@@ -148,11 +158,10 @@ $notes_query = new WP_Query(
 <section class="dj-section dj-section--contact" aria-labelledby="contact-title">
 	<div class="dj-width dj-home-footer">
 		<div>
-			<p class="dj-eyebrow"><?php esc_html_e( 'Kontakt', 'dylan-journal' ); ?></p>
-			<h2 id="contact-title" class="dj-section-title"><?php esc_html_e( 'Schreib mir gern.', 'dylan-journal' ); ?></h2>
+			<h2 id="contact-title" class="dj-section-title"><?php esc_html_e( 'Wenn du mir schreiben möchtest', 'dylan-journal' ); ?></h2>
 		</div>
 		<div>
-			<p><?php esc_html_e( 'Wenn du eine Frage zu einem Beitrag hast oder einen Gedanken teilen möchtest, freue ich mich über deine Nachricht.', 'dylan-journal' ); ?></p>
+			<p><?php esc_html_e( 'Wenn du etwas zu einem Beitrag sagen möchtest oder eine Frage hast, schreib mir über das Formular.', 'dylan-journal' ); ?></p>
 			<a class="dj-quiet-link" href="<?php echo esc_url( $contact_url ); ?>"><?php esc_html_e( 'Zum Kontaktformular', 'dylan-journal' ); ?></a>
 		</div>
 	</div>
