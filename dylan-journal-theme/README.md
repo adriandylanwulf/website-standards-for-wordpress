@@ -1,4 +1,12 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.7.0
+# Adrian Dylan Wulf – persönliches Website-Template 4.8.0
+
+## 4.8.0
+
+- die Farbgestaltung auf eine geschlossene, abgestufte Blaupalette umgestellt
+- Terrakotta- und Salbeigrün-Akzente entfernt, damit die Website ruhiger und optisch geschlossener wirkt
+- Kontaktbereich, Seitentitel, Navigation, Beitragslisten, Footer und 404-Seite mit dezenten Blautönen verfeinert
+- Farbflächen bewusst flach und ruhig gehalten: keine Verläufe, Glasflächen oder künstlich wirkenden Kartenraster
+- Kontraste, Fokuszustände, responsive Layouts, Kommentare, SEO-Ausgaben und das Badge „KI-generiert“ beibehalten
 
 ## 4.7.0
 
