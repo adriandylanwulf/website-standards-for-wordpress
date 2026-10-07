@@ -7,13 +7,13 @@
       "custom": false,
       "defaultPalette": false,
       "palette": [
-        { "slug": "paper", "color": "#fbfaf7", "name": "Papier" },
-        { "slug": "surface", "color": "#fffefa", "name": "Fläche" },
-        { "slug": "ink", "color": "#20313b", "name": "Tiefes Blau-Grau" },
-        { "slug": "muted", "color": "#536a76", "name": "Gedämpft" },
-        { "slug": "line", "color": "#d8e0df", "name": "Linie" },
-        { "slug": "accent", "color": "#2b7392", "name": "Blau" },
-        { "slug": "accent-pale", "color": "#edf4f2", "name": "Helles Blau-Grün" }
+        { "slug": "paper", "color": "#f7f8f7", "name": "Ruhiges Papier" },
+        { "slug": "surface", "color": "#ffffff", "name": "Fläche" },
+        { "slug": "ink", "color": "#1d2d3b", "name": "Tiefes Blau" },
+        { "slug": "muted", "color": "#5d6c79", "name": "Gedämpft" },
+        { "slug": "line", "color": "#d5dee6", "name": "Linie" },
+        { "slug": "accent", "color": "#2d6799", "name": "Klares Blau" },
+        { "slug": "accent-pale", "color": "#e8f0f7", "name": "Helles Blau" }
       ]
     },
     "layout": {
