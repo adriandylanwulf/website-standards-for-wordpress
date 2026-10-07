@@ -1,4 +1,13 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.10.0
+# Adrian Dylan Wulf – persönliches Website-Template 4.11.0
+
+## 4.11.0
+
+- die Startseite als zusammenhängenden Einstieg mit klarerem Abschluss neu geordnet
+- den unteren Bereich „Weiterstöbern“ persönlicher formuliert und die doppelte Kontaktverlinkung entfernt
+- Blog und Fotos als ruhige, besser lesbare redaktionelle Zeilen gestaltet
+- den Kontaktaufruf in denselben Seitenfluss integriert, statt ihn als losgelösten zweiten Block zu wiederholen
+- die Desktop-Abstände und das Startseitenbild kompakter ausbalanciert, damit der Seitenfluss früher weitergeht
+- Inhalte, URLs, Kommentare, SEO-Ausgaben, KI-Badges und mobile Darstellung beibehalten
 
 ## 4.10.0
 
