@@ -1,4 +1,12 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.8.0
+# Adrian Dylan Wulf – persönliches Website-Template 4.9.0
+
+## 4.9.0
+
+- die Startseite redaktionell klarer gegliedert: Blogbereich, Weiterstöbern und Kontakt sind jetzt deutlicher voneinander getrennt
+- die Blog-Einleitung mit einem kurzen Themenhinweis ergänzt, damit Besucher schneller einordnen können, was sie erwartet
+- den Bereich mit den weiterführenden Seiten persönlicher formuliert und optisch ruhiger in den Seitenfluss eingebettet
+- keine neuen Kartenraster, Verläufe, externen Schriften oder Skripte eingeführt
+- URLs, Kommentare, SEO-Ausgaben, Bildoptimierung, mobile Navigation und das Badge „KI-generiert“ beibehalten
 
 ## 4.8.0
 
