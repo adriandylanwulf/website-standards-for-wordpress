@@ -1,4 +1,21 @@
-# Adrian Dylan Wulf – persönliches Website-Template 4.12.0
+# Adrian Dylan Wulf – persönliches Website-Template 5.1.0
+
+## 5.1.0
+
+- das Theme als zusammenhängendes blaues, ruhiges Editorial-System neu ausbalanciert
+- Header, Startseite, Blogübersichten, Beitragsseiten, Foto- und Über-mich-Bereiche gestalterisch vereinheitlicht
+- Typografie, Lesebreiten, Abstände, Linien, Bildverhältnisse und Interaktionen überarbeitet
+- 404-Seite und Suchbereich als klaren nächsten Schritt in denselben Seitenfluss eingeordnet
+- eine sparsame visuelle Hierarchie mit besserem Kontrast und ohne externe Schrift- oder Effektbibliotheken umgesetzt
+- Inhalte, URLs, Kommentare, SEO-Ausgaben, KI-Badges und Datenschutzfunktionen beibehalten
+
+## 4.13.0
+
+- die 404-Seite als klaren, eigenständigen Bereich im Stil der Website neu gegliedert
+- Fehlercode und Überschrift als ruhigen Einstieg zusammengeführt
+- Startseite, Blog und Suche stärker als nächste Schritte strukturiert
+- die Suchzeile kompakter und auf Desktop wie Mobil besser lesbar angeordnet
+- vorhandene Links, Suche, Kommentare, SEO-Ausgaben und Datenschutzfunktionen beibehalten
 
 ## 4.12.0
 
