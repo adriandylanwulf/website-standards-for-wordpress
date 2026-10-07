@@ -127,15 +127,15 @@ function dylan_journal_seo_description_raw() {
 	}
 
 	if ( is_front_page() ) {
-		return 'Persönliche Notizen von Adrian Dylan Wulf zu Technik, Webhosting, digitaler Sicherheit und dem Alltag.';
+		return 'Adrian Dylan Wulf schreibt über Technik, Webhosting, digitale Sicherheit, Fotos und Dinge, die ihm im Alltag auffallen.';
 	}
 
 	if ( is_page( 'ueber-mich' ) ) {
-		return 'Über Adrian Dylan Wulf: persönliche Notizen zu Technik, digitaler Sicherheit, unterwegs sein und den Dingen, die im Alltag hängen bleiben.';
+		return 'Adrian Dylan Wulf stellt sich vor und schreibt über Technik, Fotos und Dinge, die ihm im Alltag auffallen.';
 	}
 
 	if ( is_home() || is_page( 'blog' ) ) {
-		return 'Notizen von Adrian Dylan Wulf zu Technik, Webhosting, digitaler Sicherheit und dem Alltag.';
+		return 'Notizen von Adrian Dylan Wulf zu Technik, Webhosting, digitaler Sicherheit und Alltagsthemen.';
 	}
 
 	if ( is_privacy_policy() || is_page( 'datenschutzerklaerung' ) ) {
@@ -162,7 +162,7 @@ function dylan_journal_seo_description_raw() {
 		$descriptions = array(
 			'meine-erfahrungen-mit-mittwald' => 'Meine persönlichen Erfahrungen mit Mittwald: schnelle Website, hilfreicher Support, eigene E-Mail-Adressen und tägliche Backups im mStudio.',
 			'was-sich-auf-meiner-website-in-den-letzten-tagen-veraendert-hat' => 'Was sich auf meiner Website verändert hat: neue Strukturen, bessere Lesbarkeit und technische Pflege für Performance, SEO und Sicherheit.',
-			'windows-11-26h2-was-ich-vom-neuen-update-erwarte' => 'Windows 11 26H2 im Check: Neuerungen, Sicherheitsupdates, CVE-Einordnung und bekannte Probleme – persönlich und verständlich erklärt.',
+			'windows-11-26h2-was-ich-vom-neuen-update-erwarte' => 'Windows 11 26H2: Neuerungen, Sicherheitsupdates, CVE-Einordnung und bekannte Probleme aus meiner Sicht.',
 			'meine-website-optimierung-design-performance-seo-und-sicherheit' => 'Was ich an meiner Website geändert habe: bessere Lesbarkeit, weniger Ablenkung sowie technische Verbesserungen für Performance, SEO und Sicherheit.',
 			'telekom-cloudflare-peering-im-traceroute-warum-1-1-1-1-nicht-wie-jede-cloudflare-ip-aussieht' => 'Telekom und Cloudflare: Ein Traceroute vom 1. Oktober 2026 zeigt unterschiedliche Wege zu 1.1.1.1, Cloudflare-IP-Adressen und Discord – mit Einordnung.',
 			'ios-27-0-1-und-macos-golden-gate-27-0-1-was-die-updates-beheben' => 'iOS 27.0.1 und macOS Golden Gate 27.0.1: Welche Fehler die Updates beheben und warum die Installation zeitnah sinnvoll ist.',
@@ -220,17 +220,20 @@ function dylan_journal_home_document_title( $title ) {
 				'woran-man-gutes-webhosting-erkennt' => 'Gutes Webhosting: Worauf ich achte | Adrian Dylan Wulf',
 				'e-mail-sicherheit-drei-gewohnheiten' => 'E-Mail-Sicherheit: Drei Gewohnheiten | Adrian Dylan Wulf',
 				'e-mail-header-lesen-was-sie-verraten-und-wann-der-blick-lohnt' => 'E-Mail-Header richtig lesen | Adrian Dylan Wulf',
-				'wordpress-backups-wiederherstellung-testen' => 'WordPress-Backups: Wiederherstellung testen | Adrian Dylan Wulf',
+				'wordpress-backups-wiederherstellung-testen' => 'WordPress-Backups testen | Adrian Dylan Wulf',
 				'passkeys-verstehen-mehr-sicherheit-ohne-passwortstress' => 'Passkeys: Anmelden ohne Passwortstress | Adrian Dylan Wulf',
 				'wordpress-7-1-1-sicherheitsupdate-schliesst-11-schwachstellen' => 'WordPress 7.1.1: 11 Lücken geschlossen | Adrian Dylan Wulf',
-				'ios-27-apple-schliesst-122-sicherheitsluecken-diese-schwachstellen-wurden-behoben' => 'iOS 27: 122 Sicherheitslücken geschlossen | Adrian Dylan Wulf',
-				'wordpress-7-1-2-kritisches-sicherheitsupdate-zeitnah-installieren' => 'WordPress 7.1.2: Kritisches Sicherheitsupdate | Adrian Dylan Wulf',
+				'ios-27-apple-schliesst-122-sicherheitsluecken-diese-schwachstellen-wurden-behoben' => 'iOS 27: Sicherheitslücken geschlossen | Adrian Dylan Wulf',
+				'wordpress-7-1-2-kritisches-sicherheitsupdate-zeitnah-installieren' => 'WordPress 7.1.2: Sicherheitsupdate | Adrian Dylan Wulf',
 				'ios-27-0-1-und-macos-golden-gate-27-0-1-was-die-updates-beheben' => 'iOS 27.0.1: Das ändert sich im Alltag | Adrian Dylan Wulf',
-				'meine-website-optimierung-design-performance-seo-und-sicherheit' => 'Meine Website: Design, Performance und SEO | Adrian Dylan Wulf',
+				'meine-website-optimierung-design-performance-seo-und-sicherheit' => 'Meine Website: Design & Performance | Adrian Dylan Wulf',
 				'meine-erfahrungen-mit-mittwald' => 'Meine Erfahrungen mit Mittwald | Adrian Dylan Wulf',
-				'windows-11-26h2-was-ich-vom-neuen-update-erwarte' => 'Windows 11 26H2: Neuerungen und Sicherheit | Adrian Dylan Wulf',
-				'was-sich-auf-meiner-website-in-den-letzten-tagen-veraendert-hat' => 'Was sich auf meiner Website verändert hat | Adrian Dylan Wulf',
+				'windows-11-26h2-was-ich-vom-neuen-update-erwarte' => 'Windows 11 26H2: Was neu ist | Adrian Dylan Wulf',
+				'was-sich-auf-meiner-website-in-den-letzten-tagen-veraendert-hat' => 'Website-Änderungen der letzten Tage | Adrian Dylan Wulf',
 				'telekom-cloudflare-peering-im-traceroute-warum-1-1-1-1-nicht-wie-jede-cloudflare-ip-aussieht' => 'Telekom und Cloudflare: Mein Traceroute | Adrian Dylan Wulf',
+				'segway-f3-erfahrungen-1900-kilometer' => 'Segway F3: Erfahrungen nach 1.900 km | Adrian Dylan Wulf',
+				'freifunk-winterberg-brilon-und-meschede-warum-ich-fuer-mich-abschliesse' => 'Freifunk: Mein persönlicher Abschluss | Adrian Dylan Wulf',
+				'whatsapp-phishing-so-funktioniert-ghost-pairing' => 'WhatsApp-Phishing: Ghost Pairing erklärt | Adrian Dylan Wulf',
 			);
 			$slug = get_post_field( 'post_name', get_queried_object_id() );
 
@@ -378,7 +381,9 @@ function dylan_journal_seo_meta() {
 	}
 
 	$title      = wp_get_document_title();
-	$site_name  = get_bloginfo( 'name' );
+	// Keep the preferred Google site name independent from a historic domain
+	// value that may still exist in the WordPress general settings.
+	$site_name  = 'Adrian Dylan Wulf';
 	$locale     = get_locale();
 	$language   = str_replace( '_', '-', $locale );
 	$url        = dylan_journal_seo_url();
@@ -401,6 +406,7 @@ function dylan_journal_seo_meta() {
 	}
 
 	echo '<meta name="description" content="' . esc_attr( $description ) . '">' . "\n";
+	echo '<meta name="application-name" content="' . esc_attr( $site_name ) . '">' . "\n";
 	echo '<meta property="og:locale" content="' . esc_attr( $locale ) . '">' . "\n";
 	echo '<meta property="og:type" content="' . esc_attr( $type ) . '">' . "\n";
 	echo '<meta property="og:title" content="' . esc_attr( $title ) . '">' . "\n";
@@ -442,6 +448,10 @@ function dylan_journal_seo_meta() {
 		'@type'       => 'WebSite',
 		'@id'         => home_url( '/#website' ),
 		'name'        => $site_name,
+		'alternateName' => array(
+			'Adrian Dylan Wulf – Persönliche Notizen',
+			'adriandylanwulf.de',
+		),
 		'url'         => home_url( '/' ),
 		'description' => dylan_journal_seo_description(),
 		'inLanguage'  => $language,
@@ -454,7 +464,7 @@ function dylan_journal_seo_meta() {
 
 	if ( $is_article ) {
 		$author_id = (int) get_post_field( 'post_author', get_the_ID() );
-		$author_name = get_bloginfo( 'name' );
+		$author_name = $site_name;
 		$author_url  = dylan_journal_page_url( 'ueber-mich', '/' );
 		$schema    = array(
 			'@context'         => 'https://schema.org',
