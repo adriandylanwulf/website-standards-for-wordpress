@@ -34,9 +34,14 @@ $related_posts = new WP_Query( $query_args );
 		<p class="dj-byline"><?php esc_html_e( 'Von', 'dylan-journal' ); ?> <a rel="author" href="<?php echo esc_url( dylan_journal_page_url( 'ueber-mich', '/ueber-mich/' ) ); ?>"><?php echo esc_html( get_bloginfo( 'name' ) ); ?></a></p>
 	</header>
 	<?php if ( has_post_thumbnail() ) : ?>
-		<figure class="dj-article-image">
-				<?php the_post_thumbnail( 'large', array( 'loading' => 'eager', 'fetchpriority' => 'high', 'sizes' => '(max-width: 768px) calc(100vw - 40px), 736px' ) ); ?>
-			<?php if ( get_the_post_thumbnail_caption() ) : ?><figcaption><?php echo wp_kses_post( get_the_post_thumbnail_caption() ); ?></figcaption><?php endif; ?>
+		<?php $thumbnail_caption = get_the_post_thumbnail_caption(); ?>
+		<?php $thumbnail_is_ai = function_exists( 'dylan_journal_is_ai_image' ) && dylan_journal_is_ai_image( get_post_thumbnail_id(), $thumbnail_caption ); ?>
+		<figure class="dj-article-image<?php echo $thumbnail_is_ai ? ' dj-media-frame--ai' : ''; ?>">
+			<div class="dj-media-frame__visual">
+				<?php the_post_thumbnail( 'large', array( 'loading' => 'eager', 'fetchpriority' => 'high', 'decoding' => 'async', 'sizes' => '(max-width: 768px) calc(100vw - 40px), 736px' ) ); ?>
+				<?php if ( $thumbnail_is_ai ) : ?><?php echo wp_kses( dylan_journal_ai_badge(), array( 'span' => array( 'class' => true, 'aria-label' => true, 'aria-hidden' => true ) ) ); ?><?php endif; ?>
+			</div>
+			<?php if ( ! $thumbnail_is_ai && $thumbnail_caption ) : ?><figcaption><?php echo wp_kses_post( $thumbnail_caption ); ?></figcaption><?php endif; ?>
 		</figure>
 	<?php endif; ?>
 	<div class="dj-reading dj-prose">
@@ -44,23 +49,39 @@ $related_posts = new WP_Query( $query_args );
 		<?php wp_link_pages( array( 'before' => '<nav class="page-links" aria-label="' . esc_attr__( 'Beitragsseiten', 'dylan-journal' ) . '">', 'after' => '</nav>' ) ); ?>
 		<a class="dj-back" href="<?php echo esc_url( dylan_journal_page_url( 'blog', '/blog/' ) ); ?>">← <?php esc_html_e( 'Zurück zum Blog', 'dylan-journal' ); ?></a>
 	</div>
-	<?php if ( comments_open() || get_comments_number() ) : ?>
-		<?php comments_template(); ?>
-	<?php endif; ?>
 	<?php if ( $related_posts->have_posts() ) : ?>
 		<section class="dj-reading dj-related" aria-labelledby="more-notes-title">
-			<p class="dj-eyebrow"><?php esc_html_e( 'Weiterlesen', 'dylan-journal' ); ?></p>
-			<h2 id="more-notes-title" class="dj-related__title"><?php esc_html_e( 'Weitere Beiträge', 'dylan-journal' ); ?></h2>
+			<h2 id="more-notes-title" class="dj-related__title"><?php esc_html_e( 'Noch mehr aus dem Blog', 'dylan-journal' ); ?></h2>
 			<div class="dj-related__list">
 				<?php while ( $related_posts->have_posts() ) : $related_posts->the_post(); ?>
+					<?php
+					$related_url       = get_permalink();
+					$related_thumbnail = get_post_thumbnail_id();
+					$related_caption   = get_the_post_thumbnail_caption();
+					$related_is_ai     = function_exists( 'dylan_journal_is_ai_image' ) && dylan_journal_is_ai_image( $related_thumbnail, $related_caption );
+					?>
 					<article class="dj-related__item">
-						<p class="dj-related__meta"><?php echo wp_kses_post( dylan_journal_primary_category_link() ); ?></p>
-						<h3><a href="<?php the_permalink(); ?>"><?php the_title(); ?></a></h3>
-						<p><?php echo esc_html( dylan_journal_excerpt() ); ?></p>
+					<?php if ( has_post_thumbnail() ) : ?>
+						<a class="dj-related__media<?php echo $related_is_ai ? ' dj-media-frame--ai' : ''; ?>" href="<?php echo esc_url( $related_url ); ?>" aria-label="<?php echo esc_attr( sprintf( __( 'Beitrag lesen: %s', 'dylan-journal' ), get_the_title() ) ); ?>">
+							<span class="dj-media-frame__visual">
+								<?php the_post_thumbnail( 'medium_large', array( 'loading' => 'lazy', 'decoding' => 'async', 'sizes' => '(max-width: 760px) calc(100vw - 40px), 360px' ) ); ?>
+								<?php if ( $related_is_ai ) : ?><?php echo wp_kses( dylan_journal_ai_badge(), array( 'span' => array( 'class' => true, 'aria-label' => true, 'aria-hidden' => true ) ) ); ?><?php endif; ?>
+							</span>
+						</a>
+					<?php endif; ?>
+						<div class="dj-related__body">
+							<p class="dj-related__meta"><?php echo wp_kses_post( dylan_journal_primary_category_link() ); ?><span aria-hidden="true"> · </span><time datetime="<?php echo esc_attr( get_the_date( DATE_W3C ) ); ?>"><?php echo esc_html( get_the_date( 'd. M Y' ) ); ?></time></p>
+							<h3><a href="<?php echo esc_url( $related_url ); ?>"><?php the_title(); ?></a></h3>
+							<p class="dj-related__excerpt"><?php echo esc_html( dylan_journal_excerpt() ); ?></p>
+							<a class="dj-related__read" href="<?php echo esc_url( $related_url ); ?>"><?php esc_html_e( 'Beitrag lesen', 'dylan-journal' ); ?> <span aria-hidden="true">→</span></a>
+						</div>
 					</article>
 				<?php endwhile; ?>
 			</div>
 		</section>
+	<?php endif; ?>
+	<?php if ( comments_open() || get_comments_number() ) : ?>
+		<?php comments_template(); ?>
 	<?php endif; ?>
 </article>
 <?php
